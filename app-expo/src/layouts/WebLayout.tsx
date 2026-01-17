@@ -1,9 +1,13 @@
 import React from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
 
+interface WebLayoutProps {
+  children: React.ReactNode;
+}
+
 const { width, height } = Dimensions.get('window');
 
-export default function WebLayout({ children }) {
+export default function WebLayout({ children }: WebLayoutProps) {
   return (
     <View style={styles.container}>
       <View style={styles.leftColumn}>

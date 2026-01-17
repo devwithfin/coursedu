@@ -1,11 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Keep original import
-import { StackNavigationProp } from '@react-navigation/stack'; // Import StackNavigationProp
-import { RootStackParamList } from '../types/navigation'; // Import RootStackParamList
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../types/navigation';
+import { useAuth } from '../contexts/AuthContext';
+import { MaterialIcons } from '@expo/vector-icons'; // Import MaterialIcons
 
-export default function WebNavbar() {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>(); // Explicitly type navigation
+interface WebNavbarProps {
+  activeScreen?: 'Dashboard' | 'Manage Member' | 'Manage Academy' | 'Manage Enrollment';
+}
+
+export default function WebNavbar({ activeScreen }: WebNavbarProps) {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <View style={styles.navbar}>
@@ -14,18 +25,26 @@ export default function WebNavbar() {
           <Text style={styles.navbarBrand}>Coursedu</Text>
         </TouchableOpacity>
 
-        <View style={styles.navbarSupportedContent}>
+        <View style={styles.centeredNav}>
           <View style={styles.navbarNav}>
-            <TouchableOpacity onPress={() => console.log('Home clicked')}>
-              <Text style={[styles.navLink, styles.activeNavLink]}>Home</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Admin', { screen: 'Dashboard' })}>
+              <Text style={[styles.navLink, activeScreen === 'Dashboard' && styles.activeNavLink]}>Dashboard</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => console.log('Link clicked')}>
-              <Text style={styles.navLink}>Link</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Admin', { screen: 'Manage Member' })}>
+              <Text style={[styles.navLink, activeScreen === 'Manage Member' && styles.activeNavLink]}>Member</Text>
             </TouchableOpacity>
-            <Text style={styles.navLinkDisabled}>Dropdown</Text>
-            <Text style={styles.navLinkDisabled}>Disabled</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Admin', { screen: 'Manage Academy' })}>
+              <Text style={[styles.navLink, activeScreen === 'Manage Academy' && styles.activeNavLink]}>Academy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Admin', { screen: 'Manage Enrollment' })}>
+              <Text style={[styles.navLink, activeScreen === 'Manage Enrollment' && styles.activeNavLink]}>Enrollment</Text>
+            </TouchableOpacity>
           </View>
         </View>
+
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <MaterialIcons name="logout" size={24} color="#F9FAFB" />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -50,11 +69,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#F9FAFB',
   },
-  navbarSupportedContent: {
+  centeredNav: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center', 
+    justifyContent: 'center',
   },
   navbarNav: {
     flexDirection: 'row',
@@ -69,10 +88,11 @@ const styles = StyleSheet.create({
     color: '#F9FAFB',
     fontWeight: 'bold',
   },
-  navLinkDisabled: {
-    color: '#F9FAFB80',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
+  logoutButton: {
+    backgroundColor: '#E53E3E',
+    padding: 8, // Adjusted padding for icon
+    borderRadius: 6,
+    justifyContent: 'center', // Center icon vertically
+    alignItems: 'center', // Center icon horizontally
   },
 });

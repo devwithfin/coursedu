@@ -9,9 +9,11 @@ export type AuthStackParamList = {
 };
 
 export type StudentTabParamList = {
-  Dashboard: undefined;
+  Home: undefined;
+  Academy: undefined;
+  Enroll: undefined; // New Enroll tab
   Courses: undefined;
-  RegistCourse: undefined;
+  Profile: undefined;
 };
 
 export type AdminStackParamList = {

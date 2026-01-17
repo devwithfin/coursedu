@@ -1,24 +1,27 @@
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function CourcesScreen() {
+const AttendanceScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Student Courses</Text>
-      <Text>Here you can view your enrolled courses.</Text>
+      <Text style={styles.title}>Attendance Screen</Text>
+      <Text>This is the attendance management screen.</Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#F9FAFB',
   },
   title: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 20,
   },
 });
+
+export default AttendanceScreen;

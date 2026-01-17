@@ -1,25 +1,26 @@
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import WebNavbar from '../../../components/WebNavbar'; // Import WebNavbar
+import WebNavbar from '../../../components/WebNavbar';
 
-export default function AdminDashboardWeb() {
+const ManageEnrollmentScreen = () => {
   return (
     <View style={styles.container}>
-      <WebNavbar activeScreen="Dashboard" />
+      <WebNavbar activeScreen="Manage Enrollment" />
       <View style={styles.content}>
-        <Text style={styles.title}>Admin Dashboard (Web)</Text>
-        <Text>Welcome to the admin dashboard for web!</Text>
+        <Text style={styles.title}>Manage Enrollment</Text>
+        <Text>This is the manage enrollment screen.</Text>
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb', // Light blue background for admin web
+    backgroundColor: '#f9fafb',
   },
   content: {
-    flex: 1, // Make content take remaining space
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -30,3 +31,5 @@ const styles = StyleSheet.create({
     color: '#00796b',
   },
 });
+
+export default ManageEnrollmentScreen;

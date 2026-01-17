@@ -3,8 +3,12 @@ const cors = require('cors');
 require('dotenv').config();
 
 const sequelize = require('./src/config/db');
+
 const authRoutes = require('./src/routes/auth.routes');
 const userRoutes = require('./src/routes/user.routes');
+const courseRoutes = require('./src/routes/course.routes');
+const enrollmentRoutes = require('./src/routes/enrollment.routes');
+const scheduleRoutes = require('./src/routes/schedule.routes');
 
 
 const app = express();
@@ -14,7 +18,9 @@ app.use(express.json());
 
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
-
+app.use('/courses', courseRoutes);
+app.use('/enrollments', enrollmentRoutes);
+app.use('/schedules', scheduleRoutes);
 
 sequelize.authenticate()
   .then(() => {

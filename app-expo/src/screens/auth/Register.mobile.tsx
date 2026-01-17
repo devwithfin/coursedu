@@ -50,7 +50,7 @@ export default function RegisterMobileScreen() {
 
       <View style={{alignItems: 'center'}}>
         <View style={styles.switchContainer}>
-          <TouchableOpacity style={styles.switchButton}>
+          <TouchableOpacity style={styles.switchButton} onPress={() => navigation.goBack()}>
             <Text style={styles.switchButtonText}>Sign In</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.switchButton, styles.activeSwitchButton]}>
@@ -111,7 +111,7 @@ export default function RegisterMobileScreen() {
         {loading ? (
           <ActivityIndicator color="#F9FAFB" />
         ) : (
-          <Text style={styles.buttonText}>Register</Text>
+          <Text style={styles.buttonText}>Sign Up</Text>
         )}
       </TouchableOpacity>
 

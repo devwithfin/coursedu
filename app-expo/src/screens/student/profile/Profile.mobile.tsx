@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function RegistCourseScreen() {
+export default function ProfileScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Register for Courses</Text>
-      <Text>Enroll in new courses here.</Text>
+      <Text style={styles.title}>Profile Screen (Mobile)</Text>
+      <Text>This is the profile screen.</Text>
     </View>
   );
 }

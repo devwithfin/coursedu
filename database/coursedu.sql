@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jan 16, 2026 at 07:40 AM
+-- Generation Time: Jan 17, 2026 at 03:26 AM
 -- Server version: 5.7.33
 -- PHP Version: 8.2.29
 
@@ -157,6 +157,7 @@ CREATE TABLE `enrollments` (
   `id` int(11) NOT NULL,
   `student_id` int(11) DEFAULT NULL,
   `course_id` int(11) DEFAULT NULL,
+  `is_approved` int(1) NOT NULL,
   `enrolled_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -164,10 +165,10 @@ CREATE TABLE `enrollments` (
 -- Dumping data for table `enrollments`
 --
 
-INSERT INTO `enrollments` (`id`, `student_id`, `course_id`, `enrolled_at`) VALUES
-(1, 3, 1, '2026-01-16 07:39:26'),
-(2, 3, 2, '2026-01-16 07:39:26'),
-(3, 4, 1, '2026-01-16 07:39:26');
+INSERT INTO `enrollments` (`id`, `student_id`, `course_id`, `is_approved`, `enrolled_at`) VALUES
+(1, 3, 1, 0, '2026-01-16 07:39:26'),
+(2, 3, 2, 0, '2026-01-16 07:39:26'),
+(3, 4, 1, 0, '2026-01-16 07:39:26');
 
 -- --------------------------------------------------------
 

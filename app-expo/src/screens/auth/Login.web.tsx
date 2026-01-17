@@ -10,17 +10,19 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { login } from '../../api/auth'; // Import the login API service
-import WebLayout from '../../layouts/WebLayout'; // Import WebLayout
+import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
+import WebLayout from '../../layouts/WebLayout';
+// Removed direct import for login from '../../api/auth';
 
 export default function LoginWeb() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false); // Re-added for web consistency
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigation();
+  const { login: authLogin, user } = useAuth(); // Get login function and user from AuthContext
 
   const handleLogin = async () => {
     setError(''); // Clear previous errors
@@ -34,11 +36,13 @@ export default function LoginWeb() {
     setLoading(true);
 
     try {
-      const response = await login(email, password);
-      if (response && response.user && response.user.role) {
-        if (response.user.role === 'admin') {
+      await authLogin(email, password);
+      // Now, after login, the user object in AuthContext should be updated.
+      // We can use the 'user' object from useAuth to determine navigation.
+      if (user && user.role) { // Check user after login
+        if (user.role === 'admin') {
           navigation.navigate('Admin', { screen: 'Dashboard' });
-        } else if (response.user.role === 'student') {
+        } else if (user.role === 'student') {
           setError("Students cannot access the web admin panel. Please use the mobile app.");
           Alert.alert("Login Failed", "Students cannot access the web admin panel. Please use the mobile app.");
         } else {
@@ -46,8 +50,9 @@ export default function LoginWeb() {
           Alert.alert("Login Failed", "Unsupported user role. Please contact support.");
         }
       } else {
-        setError("Invalid login response. Please try again.");
-        Alert.alert("Login Failed", "Invalid login response. Please try again.");
+        // This case should ideally not be hit if authLogin updates the user
+        setError("Invalid login response or user not set. Please try again.");
+        Alert.alert("Login Failed", "Invalid login response or user not set. Please try again.");
       }
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during login.');
@@ -116,7 +121,7 @@ export default function LoginWeb() {
           {loading ? (
             <ActivityIndicator color="#F9FAFB" />
           ) : (
-            <Text style={styles.buttonText}>Masuk</Text>
+            <Text style={styles.buttonText}>Sign In</Text>
           )}
         </TouchableOpacity>
 
