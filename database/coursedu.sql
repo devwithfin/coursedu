@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jan 17, 2026 at 03:26 AM
+-- Generation Time: Jan 17, 2026 at 08:49 AM
 -- Server version: 5.7.33
 -- PHP Version: 8.2.29
 
@@ -166,8 +166,8 @@ CREATE TABLE `enrollments` (
 --
 
 INSERT INTO `enrollments` (`id`, `student_id`, `course_id`, `is_approved`, `enrolled_at`) VALUES
-(1, 3, 1, 0, '2026-01-16 07:39:26'),
-(2, 3, 2, 0, '2026-01-16 07:39:26'),
+(1, 3, 1, 1, '2026-01-16 07:39:26'),
+(2, 3, 2, 1, '2026-01-16 07:39:26'),
 (3, 4, 1, 0, '2026-01-16 07:39:26');
 
 -- --------------------------------------------------------
@@ -351,7 +351,13 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `status`, `creat
 (2, 'Budi Guru', 'budi@lms.test', 'password123', 'teacher', 'active', '2026-01-16 07:39:26'),
 (3, 'Siti Mahasiswa', 'siti@lms.test', 'password123', 'student', 'active', '2026-01-16 07:39:26'),
 (4, 'Joko Mahasiswa', 'joko@lms.test', 'password123', 'student', 'active', '2026-01-16 07:39:26'),
-(5, 'Manager LMS', 'manager@lms.test', 'manager123', 'manager', 'active', '2026-01-16 07:39:26');
+(5, 'Manager LMS', 'manager@lms.test', 'manager123', 'manager', 'active', '2026-01-16 07:39:26'),
+(6, 'Indra Guru', 'indra@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
+(7, 'Andi Guru', 'andi@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
+(8, 'Dono Guru', 'dono@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
+(9, 'Sinta Guru', 'sinta@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
+(10, 'Cika Guru', 'cika@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
+(11, 'Mala Guru', 'mala@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26');
 
 -- --------------------------------------------------------
 
@@ -577,7 +583,7 @@ ALTER TABLE `submissions`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `user_logs`
