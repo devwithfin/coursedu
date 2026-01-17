@@ -22,7 +22,7 @@ export default function LoginWeb() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigation();
-  const { login: authLogin, user } = useAuth(); // Get login function and user from AuthContext
+  const { login: authLogin } = useAuth(); // No longer need user from here
 
   const handleLogin = async () => {
     setError(''); // Clear previous errors
@@ -36,13 +36,13 @@ export default function LoginWeb() {
     setLoading(true);
 
     try {
-      await authLogin(email, password);
-      // Now, after login, the user object in AuthContext should be updated.
-      // We can use the 'user' object from useAuth to determine navigation.
-      if (user && user.role) { // Check user after login
-        if (user.role === 'admin') {
-          navigation.navigate('Admin', { screen: 'Dashboard' });
-        } else if (user.role === 'student') {
+      const loggedInUser = await authLogin(email, password); // Get user from the return value
+      
+      if (loggedInUser && loggedInUser.role) {
+        if (loggedInUser.role === 'admin') {
+          // Navigation is handled by the RootNavigator now, so we don't need to do anything here.
+          // The state change in AuthProvider will trigger the re-render.
+        } else if (loggedInUser.role === 'student') {
           setError("Students cannot access the web admin panel. Please use the mobile app.");
           Alert.alert("Login Failed", "Students cannot access the web admin panel. Please use the mobile app.");
         } else {
@@ -50,7 +50,6 @@ export default function LoginWeb() {
           Alert.alert("Login Failed", "Unsupported user role. Please contact support.");
         }
       } else {
-        // This case should ideally not be hit if authLogin updates the user
         setError("Invalid login response or user not set. Please try again.");
         Alert.alert("Login Failed", "Invalid login response or user not set. Please try again.");
       }

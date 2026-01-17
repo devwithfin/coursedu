@@ -9,6 +9,8 @@ const userRoutes = require('./src/routes/user.routes');
 const courseRoutes = require('./src/routes/course.routes');
 const enrollmentRoutes = require('./src/routes/enrollment.routes');
 const scheduleRoutes = require('./src/routes/schedule.routes');
+const materialRoutes = require('./src/routes/material.routes');
+
 
 
 const app = express();
@@ -21,6 +23,7 @@ app.use('/users', userRoutes);
 app.use('/courses', courseRoutes);
 app.use('/enrollments', enrollmentRoutes);
 app.use('/schedules', scheduleRoutes);
+app.use('/materials', materialRoutes);
 
 sequelize.authenticate()
   .then(() => {

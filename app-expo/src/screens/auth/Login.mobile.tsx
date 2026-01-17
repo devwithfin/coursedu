@@ -12,7 +12,7 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigation();
-  const { login: authLogin } = useAuth(); // Get login function from AuthContext
+  const { login: authLogin, logout } = useAuth(); // Get login and logout functions
 
   const handleLogin = async () => {
     setError(''); // Clear previous errors
@@ -26,14 +26,16 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      // Use the login function from AuthContext
-      await authLogin(email, password); 
-      // After successful login via AuthContext, navigate based on role
-      // The user object should now be available via useAuth in StudentNavigator
-      navigation.navigate('Student', { screen: 'Dashboard' }); 
-      // NOTE: Role-based navigation logic needs to be revisited or handled globally
-      // if AuthContext doesn't expose role directly here for navigation purposes.
-      // For now, assuming student role will navigate to student dashboard.
+      const loggedInUser = await authLogin(email, password);
+
+      if (loggedInUser && loggedInUser.role === 'admin') {
+        setError('Admins cannot log in on the mobile app. Please use the web panel.');
+        Alert.alert('Login Failed', 'Admins cannot log in on the mobile app. Please use the web panel.');
+        // Also log the user out again so they don't get stuck
+        await logout();
+      }
+      // For students, no navigation is needed here. The RootNavigator will handle it.
+
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during login.');
       Alert.alert("Login Error", err.message || 'An unexpected error occurred during login.');

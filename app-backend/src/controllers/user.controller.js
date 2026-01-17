@@ -2,7 +2,28 @@ const User = require('../models/user.model');
 const bcrypt = require('bcrypt');
 
 exports.getAll = async (req, res) => {
+  const { role, limit, orderBy } = req.query;
+  const whereClause = {};
+  const findOptions = {};
+
+  if (role) {
+    whereClause.role = role;
+  }
+
+  if (limit) {
+    findOptions.limit = parseInt(limit, 10);
+  }
+
+  if (orderBy) {
+    const [field, direction] = orderBy.split(',');
+    if (field && (direction === 'ASC' || direction === 'DESC')) {
+      findOptions.order = [[field, direction]];
+    }
+  }
+
   const users = await User.findAll({
+    where: whereClause,
+    ...findOptions, // Spread the limit and order options
     attributes: { exclude: ['password'] },
   });
   res.json(users);

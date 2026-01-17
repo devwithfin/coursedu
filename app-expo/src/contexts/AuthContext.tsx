@@ -13,7 +13,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -51,6 +51,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const fetchedUser: User = response.user; // Assuming response.user contains the User object
       setUser(fetchedUser);
       await AsyncStorage.setItem('user', JSON.stringify(fetchedUser));
+      return fetchedUser;
     } finally {
       setLoading(false);
     }

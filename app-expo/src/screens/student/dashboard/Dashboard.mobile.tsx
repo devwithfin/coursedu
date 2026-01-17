@@ -1,73 +1,173 @@
-import { View, Text, StyleSheet, TextInput, ScrollView } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons'; // Import icons
+import { View, Text, StyleSheet, TextInput, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { getTeachers } from '../../../api/user';
+import { getEnrollments } from '../../../api/enrollment';
+import { getMaterials } from '../../../api/material'; // Import getMaterials
+import { useAuth } from '../../../contexts/AuthContext';
+
+const blobImages = [
+  require('../../../../assets/images/blob1.png'),
+  require('../../../../assets/images/blob2.png'),
+  require('../../../../assets/images/blob3.png'),
+  require('../../../../assets/images/blob4.png'),
+  require('../../../../assets/images/blob5.png'),
+  require('../../../../assets/images/blob6.png'),
+];
+
+interface Teacher {
+  id: string;
+  name: string;
+}
+
+interface Enrollment {
+  id: number;
+  course: {
+    id: number;
+    title: string;
+    start_date: string;
+    end_date: string;
+    teacher: {
+      name: string;
+    };
+  };
+}
+
+interface Material {
+  id: number;
+  title: string;
+  content: string; // Assuming content is a string
+  file_path?: string; // Optional file path
+  uploaded_at: string;
+  course: {
+    title: string;
+  };
+}
 
 export default function DashboardScreen() {
+  const { user } = useAuth();
+  const navigation = useNavigation();
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]); // New state for materials
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(true);
+  const [loadingMaterials, setLoadingMaterials] = useState(true); // New loading state for materials
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) {
+        setLoadingTeachers(false);
+        setLoadingEnrollments(false);
+        setLoadingMaterials(false);
+        return;
+      }
+      try {
+        // Fetch teachers
+        setLoadingTeachers(true);
+        const fetchedTeachers = await getTeachers(10, 'name,ASC');
+        setTeachers(fetchedTeachers);
+        
+        // Fetch enrollments
+        setLoadingEnrollments(true);
+        const fetchedEnrollments = await getEnrollments(user.id, 3, 'enrolled_at,DESC');
+        setEnrollments(fetchedEnrollments);
+
+        // Extract course IDs from enrollments
+        const courseIds = fetchedEnrollments.map(enrollment => enrollment.course.id);
+
+        // Fetch materials based on course IDs
+        setLoadingMaterials(true);
+        if (courseIds.length > 0) {
+          const fetchedMaterials = await getMaterials(courseIds, 5, 'uploaded_at,DESC');
+          setMaterials(fetchedMaterials);
+        } else {
+          setMaterials([]); // No enrollments, no materials
+        }
+
+        setError(null);
+      } catch (err) {
+        setError(err.message || 'Failed to fetch data');
+      } finally {
+        setLoadingTeachers(false);
+        setLoadingEnrollments(false);
+        setLoadingMaterials(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  const renderTeacher = ({ item }: { item: Teacher }) => (
+    <View style={styles.circularTeacherCard}>
+      <MaterialCommunityIcons name="account-circle" size={60} color="#083D7F" />
+      <Text style={styles.circularTeacherName}>{item.name}</Text>
+    </View>
+  );
+  
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString().slice(-2)}`;
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-      {/* Search Bar */}
-      <View style={styles.searchBarContainer}>
-        <MaterialCommunityIcons name="magnify" size={24} color="#666" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search your course"
-          placeholderTextColor="#666"
-        />
-      </View>
-
       {/* Academy Section Header */}
       <View style={styles.academyHeader}>
         <Text style={styles.sectionTitle}>Courses</Text>
-        <Text style={styles.seeAllText}>See All</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Academy')}>
+          <Text style={styles.seeAllText}>See All</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Course Activity Cards */}
-      <View style={styles.card}>
-        <View style={styles.cardLeftContent}>
-          <Text style={styles.courseTitle}>Course1</Text>
-          <Text style={styles.teacherName}>Teacher Name</Text>
-        </View>
-        <Text style={styles.dateRange}>09/12/04 - 12/12/04</Text>
-      </View>
-      <View style={styles.card}>
-        <View style={styles.cardLeftContent}>
-          <Text style={styles.courseTitle}>Course2</Text>
-          <Text style={styles.teacherName}>Teacher Name</Text>
-        </View>
-        <Text style={styles.dateRange}>09/12/04 - 12/12/04</Text>
-      </View>
-      <View style={styles.card}>
-        <View style={styles.cardLeftContent}>
-          <Text style={styles.courseTitle}>Course3</Text>
-          <Text style={styles.teacherName}>Teacher Name</Text>
-        </View>
-        <Text style={styles.dateRange}>09/12/04 - 12/12/04</Text>
-      </View>
+      {/* Enrolled Courses */}
+      {loadingEnrollments ? (
+        <ActivityIndicator size="large" color="#083D7F" />
+      ) : error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : (
+        enrollments.map((enrollment, index) => (
+          <View key={enrollment.id} style={styles.card}>
+            <Image source={blobImages[index % blobImages.length]} style={styles.cardImage} />
+            <View style={styles.cardContent}>
+              <View style={styles.overlay} />
+              <View style={styles.cardLeftContent}>
+                <Text style={styles.courseTitle}>{enrollment.course.title}</Text>
+                <Text style={styles.teacherName}>{enrollment.course.teacher.name}</Text>
+              </View>
+            </View>
+          </View>
+        ))
+      )}
 
       {/* Teachers Section Header */}
       <View style={styles.teachersHeader}>
         <Text style={styles.teachersTitle}>Teachers</Text>
-        <Text style={styles.seeAllText}>See All</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Academy')}>
+          <Text style={styles.seeAllText}>See All</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Circular Teacher Cards */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.circularTeachersScrollView}>
-        <View style={styles.circularTeacherCard}>
-          <View style={styles.circularTeacherImage}></View>
-          <Text style={styles.circularTeacherName}>Teacher1</Text>
-        </View>
-        <View style={styles.circularTeacherCard}>
-          <View style={styles.circularTeacherImage}></View>
-          <Text style={styles.circularTeacherName}>Teacher2</Text>
-        </View>
-        <View style={styles.circularTeacherCard}>
-          <View style={styles.circularTeacherImage}></View>
-          <Text style={styles.circularTeacherName}>Teacher3</Text>
-        </View>
-        <View style={styles.circularTeacherCard}>
-          <View style={styles.circularTeacherImage}></View>
-          <Text style={styles.circularTeacherName}>Teacher4</Text>
-        </View>
-      </ScrollView>
+      {/* Teachers List */}
+      <View>
+        {loadingTeachers ? (
+          <ActivityIndicator size="large" color="#083D7F" />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          <FlatList
+            horizontal
+            data={teachers}
+            renderItem={renderTeacher}
+            keyExtractor={(item) => item.id.toString()}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.circularTeachersScrollView}
+          />
+        )}
+      </View>
 
       {/* Latest Material Section Header */}
       <View style={styles.latestMaterialHeader}>
@@ -76,32 +176,29 @@ export default function DashboardScreen() {
 
       {/* Latest Material Cards */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.latestMaterialScrollView}>
-        <View style={styles.latestMaterialCard}>
-          <View style={styles.latestMaterialImagePlaceholder}></View>
-          <Text style={styles.latestMaterialCardTitle}>Material Title 1</Text>
-          <Text style={styles.latestMaterialCardContentTitle}>Content title for material 1</Text>
-        </View>
-        <View style={styles.latestMaterialCard}>
-          <View style={styles.latestMaterialImagePlaceholder}></View>
-          <Text style={styles.latestMaterialCardTitle}>Material Title 2</Text>
-          <Text style={styles.latestMaterialCardContentTitle}>Content title for material 2</Text>
-        </View>
-        <View style={styles.latestMaterialCard}>
-          <View style={styles.latestMaterialImagePlaceholder}></View>
-          <Text style={styles.latestMaterialCardTitle}>Material Title 3</Text>
-          <Text style={styles.latestMaterialCardContentTitle}>Content title for material 3</Text>
-        </View>
+        {loadingMaterials ? (
+            <ActivityIndicator size="large" color="#083D7F" />
+          ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : (
+            materials.map((material, index) => (
+              <View key={material.id} style={styles.latestMaterialCard}>
+                <Image source={blobImages[index % blobImages.length]} style={styles.latestMaterialImage} />
+                <Text style={styles.latestMaterialCardTitle}>{material.title}</Text>
+                <Text style={styles.latestMaterialCardContentTitle}>{material.course.title}</Text>
+              </View>
+            ))
+          )}
       </ScrollView>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  // General Styles
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
-    paddingTop: 20, // Add some top padding
+    paddingTop: 0,
   },
   sectionTitle: {
     fontSize: 20,
@@ -109,24 +206,21 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginTop: 30,
     marginBottom: 15,
-    marginLeft: 20, // Align with the search bar's left margin
   },
   seeAllText: {
     fontSize: 14,
     color: '#083D7F',
     fontWeight: 'bold',
   },
-
-  // Search Bar Styles
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 25, // Rounded pill shape
+    borderRadius: 25,
     paddingHorizontal: 15,
-    paddingVertical: 15, // Increased vertical padding
+    paddingVertical: 15,
     marginHorizontal: 20,
-    width: '90%', // Full width with some margin
+    width: '90%',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -135,39 +229,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.20,
     shadowRadius: 1.41,
     elevation: 2,
-    alignSelf: 'center', // Center the search bar
+    alignSelf: 'center',
   },
   searchIcon: {
     marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14, // Decreased font size
+    fontSize: 14,
     color: '#333',
     paddingVertical: 0,
   },
-
-  // Course Activity Cards Styles
   academyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 20, // Align with other content
-    marginTop: 30, // Consistent space from previous section
+    marginHorizontal: 20,
+    marginTop: 10,
     marginBottom: 15,
   },
   card: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#083D7F',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    padding: 15,
     marginHorizontal: 20,
     marginBottom: 10,
     width: '90%',
+    height: 100,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -176,67 +265,89 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 1.00,
     elevation: 1,
+    overflow: 'hidden', // Clip image corners
+  },
+  cardImage: {
+    width: '100%',
+    height: 100,
+    resizeMode: 'cover',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+  cardContent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   cardLeftContent: {
-    flex: 1, // Take up available space
-    justifyContent: 'center', // Center vertically
+    flex: 1,
+    justifyContent: 'flex-start',
   },
   courseTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#083D7F', // Changed color
+    color: '#F9FAFB',
   },
   teacherName: {
     fontSize: 14,
-    color: '#666',
+    color: '#F9FAFB',
   },
   dateRange: {
-    fontSize: 10, // Decreased font size
-    color: '#888',
-    textAlign: 'right', // Align to right
+    fontSize: 10,
+    color: '#F9FAFB',
+    textAlign: 'right',
   },
-
-  // Teachers Section Styles
-  teachersHeader: { // New style for Teachers section header
+  teachersHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 20,
-    marginTop: 30, // Space from previous section
+    marginTop: 30,
     marginBottom: 15,
   },
-  teachersTitle: { // New style for Teachers title
+  teachersTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#111827',
   },
-  circularTeachersScrollView: { // New style for Teachers ScrollView
+  circularTeachersScrollView: {
     paddingLeft: 20,
     marginTop: 10,
   },
-  circularTeacherCard: { // New style for individual teacher cards
-    alignItems: 'center',
-    marginRight: 15,
-    width: 80,
-  },
-  circularTeacherImage: { // New style for teacher circular image
+  circularTeacherImage: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#e0e0e0', // Placeholder color
+    backgroundColor: '#e0e0e0',
     borderWidth: 1,
     borderColor: '#ccc',
     marginBottom: 8,
   },
-  circularTeacherName: { // New style for teacher name
+  circularTeacherCard: {
+    marginRight: 16,
+  },
+  circularTeacherName: {
     fontSize: 12,
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
   },
-
-  // Latest Material Section Styles
-  latestMaterialHeader: { // Style for Latest Material section header
+  latestMaterialHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -244,19 +355,19 @@ const styles = StyleSheet.create({
     marginTop: 50,
     marginBottom: 15,
   },
-  latestMaterialTitleHeader: { // Style for Latest Material title
+  latestMaterialTitleHeader: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#111827',
   },
-  latestMaterialScrollView: { // Style for horizontal ScrollView of latest materials
+  latestMaterialScrollView: {
     paddingLeft: 20,
     marginTop: 10,
   },
-  latestMaterialCard: { // Style for individual latest material cards (vertical rectangle)
-    width: 150, // Fixed width for vertical card
+  latestMaterialCard: {
+    width: 150,
     marginRight: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // Reverted to white
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -270,21 +381,26 @@ const styles = StyleSheet.create({
     shadowRadius: 1.00,
     elevation: 1,
   },
-  latestMaterialImagePlaceholder: { // Placeholder for material image
+  latestMaterialImage: {
     width: '100%',
-    height: 90, // Rectangular image placeholder
-    backgroundColor: '#e0e0e0',
+    height: 90,
+    resizeMode: 'cover',
     borderRadius: 4,
     marginBottom: 10,
   },
-  latestMaterialCardTitle: { // Style for material title within card
+  latestMaterialCardTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#083D7F',
+    color: '#083D7F', // Reverted to original blue
     marginBottom: 5,
   },
-  latestMaterialCardContentTitle: { // Style for material content title within card
+  latestMaterialCardContentTitle: {
     fontSize: 12,
-    color: '#666',
+    color: '#666', // Reverted to original gray
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginHorizontal: 20,
   },
 });

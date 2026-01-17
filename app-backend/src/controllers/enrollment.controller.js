@@ -1,64 +1,50 @@
 const Enrollment = require('../models/enrollment.model');
+const Course = require('../models/course.model');
+const User = require('../models/user.model');
 
 exports.getAll = async (req, res) => {
-  const enrollments = await Enrollment.findAll();
-  res.json(enrollments);
-};
+  const { student_id, is_approved, limit, orderBy } = req.query;
+  const whereClause = {};
+  const findOptions = {};
 
-exports.getById = async (req, res) => {
-  const enrollment = await Enrollment.findByPk(req.params.id);
-  if (!enrollment) {
-    return res.status(404).json({ message: 'Enrollment not found' });
-  }
-  res.json(enrollment);
-};
-
-exports.create = async (req, res) => {
-  const { student_id, course_id } = req.body;
-
-  const enrollment = await Enrollment.create({
-    student_id,
-    course_id,
-    is_approved: 0,
-  });
-
-  res.status(201).json(enrollment);
-};
-
-exports.update = async (req, res) => {
-  const enrollment = await Enrollment.findByPk(req.params.id);
-  if (!enrollment) {
-    return res.status(404).json({ message: 'Enrollment not found' });
+  if (student_id) {
+    whereClause.student_id = student_id;
   }
 
-  const { student_id, course_id } = req.body;
-
-  enrollment.student_id = student_id ?? enrollment.student_id;
-  enrollment.course_id = course_id ?? enrollment.course_id;
-
-  await enrollment.save();
-
-  res.json({ message: 'Enrollment updated' });
-};
-
-exports.remove = async (req, res) => {
-  const enrollment = await Enrollment.findByPk(req.params.id);
-  if (!enrollment) {
-    return res.status(404).json({ message: 'Enrollment not found' });
+  if (is_approved) {
+    whereClause.is_approved = is_approved;
   }
 
-  await enrollment.destroy();
-  res.json({ message: 'Enrollment deleted' });
-};
-
-exports.approve = async (req, res) => {
-  const enrollment = await Enrollment.findByPk(req.params.id);
-  if (!enrollment) {
-    return res.status(404).json({ message: 'Enrollment not found' });
+  if (limit) {
+    findOptions.limit = parseInt(limit, 10);
   }
 
-  enrollment.is_approved = 1;
-  await enrollment.save();
+  if (orderBy) {
+    const [field, direction] = orderBy.split(',');
+    if (field && (direction === 'ASC' || direction === 'DESC')) {
+      findOptions.order = [[field, direction]];
+    }
+  }
 
-  res.json({ message: 'Enrollment approved' });
+  try {
+    const enrollments = await Enrollment.findAll({
+      where: whereClause,
+      ...findOptions, // Spread the limit and order options
+      include: [
+        {
+          model: Course,
+          include: [
+            {
+              model: User,
+              as: 'teacher',
+              attributes: ['name'], // Only get the teacher's name
+            },
+          ],
+        },
+      ],
+    });
+    res.json(enrollments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching enrollments', error: error.message });
+  }
 };

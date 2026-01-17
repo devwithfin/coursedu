@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
+const User = require('./user.model');
 
 const Course = sequelize.define(
   'courses',
@@ -9,29 +10,27 @@ const Course = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    title: {
-      type: DataTypes.STRING(200),
-    },
-    description: {
-      type: DataTypes.TEXT,
-    },
+    title: DataTypes.STRING,
+    description: DataTypes.TEXT,
     teacher_id: {
       type: DataTypes.INTEGER,
+      references: {
+        model: User,
+        key: 'id',
+      },
     },
     status: {
       type: DataTypes.ENUM('active', 'archived'),
       defaultValue: 'active',
     },
-    start_date: {
-      type: DataTypes.DATEONLY,
-    },
-    end_date: {
-      type: DataTypes.DATEONLY,
-    },
+    start_date: DataTypes.DATEONLY,
+    end_date: DataTypes.DATEONLY,
   },
   {
     timestamps: false,
   }
 );
+
+Course.belongsTo(User, { as: 'teacher', foreignKey: 'teacher_id' });
 
 module.exports = Course;
