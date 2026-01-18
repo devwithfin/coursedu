@@ -1,11 +1,17 @@
 const Course = require('../models/course.model');
 exports.getAll = async (req, res) => {
-  const courses = await Course.findAll();
+  const courses = await Course.findAll({
+    include: [{ model: User, as: 'teacher' }],
+  });
   res.json(courses);
 };
 
+const User = require('../models/user.model');
+
 exports.getById = async (req, res) => {
-  const course = await Course.findByPk(req.params.id);
+  const course = await Course.findByPk(req.params.id, {
+    include: [{ model: User, as: 'teacher' }],
+  });
   if (!course) {
     return res.status(404).json({ message: 'Course not found' });
   }

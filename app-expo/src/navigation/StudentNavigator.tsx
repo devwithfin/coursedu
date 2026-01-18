@@ -6,8 +6,9 @@ import { StackNavigationProp } from '@react-navigation/stack'; // Import StackNa
 import { RootStackParamList } from '../types/navigation'; // Import RootStackParamList
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'; // Import BottomTabBarProps
 
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import AcademyNavigator from './AcademyNavigator'; // Import the new AcademyNavigator
 import StudentDashboardScreen from '../screens/student/dashboard/Dashboard.mobile';
-import AcademyScreen from '../screens/student/academy/Academy.mobile'; // Import the new AcademyScreen
 
 import ProfileScreen from '../screens/student/profile/Profile.mobile'; // Import the new ProfileScreen
 import EnrollScreen from '../screens/student/enroll/Enroll.mobile'; // Import the new EnrollScreen
@@ -226,13 +227,20 @@ export default function StudentNavigator() {
       />
       <Tab.Screen
         name="Academy" // New tab
-        component={AcademyScreen} // For now, points to Dashboard
-        options={{
+        component={AcademyNavigator} // For now, points to Dashboard
+        options={({ route }) => ({
           tabBarLabel: 'Academy',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="school" color={color} size={size} /> // Academy icon
           ),
-        }}
+          tabBarStyle: ((route) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? "AcademyList";
+            if (routeName === 'Class') {
+              return { display: 'none' };
+            }
+            return;
+          })(route),
+        })}
       />
       <Tab.Screen
         name="Enroll" // New central tab

@@ -41,6 +41,7 @@ interface Material {
   file_path?: string; // Optional file path
   uploaded_at: string;
   course: {
+    id: number;
     title: string;
   };
 }
@@ -130,7 +131,11 @@ export default function DashboardScreen() {
         <Text style={styles.errorText}>{error}</Text>
       ) : (
         enrollments.map((enrollment, index) => (
-          <View key={enrollment.id} style={styles.card}>
+          <TouchableOpacity
+            key={enrollment.id}
+            style={styles.card}
+            onPress={() => navigation.navigate('Academy', { screen: 'Class', params: { courseId: enrollment.course.id, courseTitle: enrollment.course.title } })}
+          >
             <Image source={blobImages[index % blobImages.length]} style={styles.cardImage} />
             <View style={styles.cardContent}>
               <View style={styles.overlay} />
@@ -139,7 +144,7 @@ export default function DashboardScreen() {
                 <Text style={styles.teacherName}>{enrollment.course.teacher.name}</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))
       )}
 
@@ -182,11 +187,15 @@ export default function DashboardScreen() {
             <Text style={styles.errorText}>{error}</Text>
           ) : (
             materials.map((material, index) => (
-              <View key={material.id} style={styles.latestMaterialCard}>
+              <TouchableOpacity 
+                key={material.id} 
+                style={styles.latestMaterialCard}
+                onPress={() => navigation.navigate('Academy', { screen: 'Class', params: { courseId: material.course.id } })}
+              >
                 <Image source={blobImages[index % blobImages.length]} style={styles.latestMaterialImage} />
                 <Text style={styles.latestMaterialCardTitle}>{material.title}</Text>
                 <Text style={styles.latestMaterialCardContentTitle}>{material.course.title}</Text>
-              </View>
+              </TouchableOpacity>
             ))
           )}
       </ScrollView>

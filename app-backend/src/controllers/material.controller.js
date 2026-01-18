@@ -32,7 +32,7 @@ exports.getAll = async (req, res) => {
       include: [
         {
           model: Course,
-          attributes: ['title'], // Only get the course title
+          attributes: ['id', 'title'],
         },
       ],
     });
@@ -40,4 +40,23 @@ exports.getAll = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error fetching materials', error: error.message });
   }
+};
+
+exports.getById = async (req, res) => {
+    try {
+        const material = await Material.findByPk(req.params.id, {
+            include: [{
+                model: Course,
+                attributes: ['title'],
+            }],
+        });
+
+        if (!material) {
+            return res.status(404).json({ message: 'Material not found' });
+        }
+
+        res.json(material);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching material', error: error.message });
+    }
 };

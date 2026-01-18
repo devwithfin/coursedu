@@ -8,9 +8,26 @@ export type AuthStackParamList = {
   RegisterMobile: undefined; // Or define params if RegisterMobile has any
 };
 
+interface Material {
+  id: number;
+  title: string;
+  content: string;
+  file_path?: string;
+  uploaded_at: string;
+  course: {
+    title: string;
+  };
+}
+
+export type AcademyStackParamList = {
+  AcademyList: undefined;
+  Class: { courseId: number; courseTitle: string };
+  ScheduleList: { courseId: number; material: Material };
+};
+
 export type StudentTabParamList = {
   Home: undefined;
-  Academy: undefined;
+  Academy: NavigatorScreenParams<AcademyStackParamList>;
   Enroll: undefined; // New Enroll tab
   Courses: undefined;
   Profile: undefined;
@@ -25,6 +42,8 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList> | undefined;
   Student: NavigatorScreenParams<StudentTabParamList>;
   Admin: NavigatorScreenParams<AdminStackParamList>;
+  Class: { courseId: number; courseTitle: string };
+  ScheduleList: { courseId: number; material: Material };
   // Add other top-level screens if any
 };
 

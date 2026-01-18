@@ -13,6 +13,13 @@ exports.getById = async (req, res) => {
   res.json(schedule);
 };
 
+exports.getByCourseId = async (req, res) => {
+  const schedules = await Schedule.findAll({
+    where: { course_id: req.params.course_id },
+  });
+  res.json(schedules);
+};
+
 exports.create = async (req, res) => {
   const {
     course_id,

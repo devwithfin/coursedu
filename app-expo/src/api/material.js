@@ -39,3 +39,18 @@ export const getMaterials = async (courseIds = [], limit = null, orderBy = null)
     }
   }
 };
+
+export const getMaterialById = async (materialId) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/materials/${materialId}`);
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            throw new Error(error.response.data.message || 'Failed to fetch material details');
+        } else if (error.request) {
+            throw new Error('No response from server. Please check your network connection.');
+        } else {
+            throw new Error('Error during fetch material details request.');
+        }
+    }
+};

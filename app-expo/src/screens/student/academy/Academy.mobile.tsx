@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TextInput, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../types/navigation';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getEnrollments } from '../../../api/enrollment';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; // Import MaterialCommunityIcons
@@ -28,6 +31,7 @@ interface Enrollment {
 
 const AcademyScreen = () => {
   const { user } = useAuth();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +107,10 @@ const AcademyScreen = () => {
         <Text style={styles.errorText}>{error}</Text>
       ) : (
         filteredEnrollments.map((enrollment, index) => (
-          <View key={enrollment.id} style={styles.card}>
+          <TouchableOpacity 
+            key={enrollment.id} 
+            style={styles.card}
+            onPress={() => navigation.navigate('Class', { courseId: enrollment.course.id, courseTitle: enrollment.course.title })}>
             <Image source={blobImages[index % blobImages.length]} style={styles.cardImage} />
             <View style={styles.cardContent}>
               <View style={styles.overlay} />
@@ -112,7 +119,7 @@ const AcademyScreen = () => {
                 <Text style={styles.teacherName}>{enrollment.course.teacher.name}</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))
       )}
     </ScrollView>
