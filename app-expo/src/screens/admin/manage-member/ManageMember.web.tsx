@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, S
 import { Ionicons } from '@expo/vector-icons';
 import WebNavbar from '../../../components/WebNavbar';
 
-/* Data Dummy */
+// Data Dummy
 const INITIAL_MEMBERS = [
   {
     id: 1,
@@ -13,14 +13,53 @@ const INITIAL_MEMBERS = [
     email: 'alfiansyah@lms.test',
     password: 'password123',
     phone: '08123456789',
-    registerDate: '2025-01-05',
+    registerDate: '2026-01-01',
     role: 'Teacher',
     status: true,
     course: 'Pemrograman Web',
   },
+  {
+    id: 2,
+    fullName: 'Eka Avriliana',
+    dob: '2005-04-27',
+    gender: 'Female',
+    email: 'ekaavril@lms.test',
+    password: 'password123',
+    phone: '08129876543',
+    registerDate: '2026-01-01',
+    role: 'Teacher',
+    status: true,
+    course: 'Mobile Programming',
+  },
+  {
+    id: 3,
+    fullName: 'Hesti Indriyani',
+    dob: '2004-12-10',
+    gender: 'Female',
+    email: 'hestiindriyani@lms.test',
+    password: 'password123',
+    phone: '08129080706',
+    registerDate: '2026-01-01',
+    role: 'Teacher',
+    status: true,
+    course: 'Basis Data',
+  },
+  {
+    id: 3,
+    fullName: 'Rodstein Fing Beta Lucson',
+    dob: '2003-04-20',
+    gender: 'Male',
+    email: 'luckycollage@lms.test',
+    password: 'password123',
+    phone: '08123040506',
+    registerDate: '2026-01-01',
+    role: 'Teacher',
+    status: true,
+    course: 'Machine Learning',
+  },
 ];
 
-/* Empty Form */
+// Empty Form
 const emptyForm = {
   fullName: '',
   dob: '',
@@ -37,7 +76,7 @@ const emptyForm = {
 const isRoleWithoutCourse = (role) =>
   role === 'Admin' || role === 'Management';
 
-/* Web Select */
+// Web Select
 const WebSelect = ({ value, onChange, options, disabled }) => (
   <select
     value={value}
@@ -60,13 +99,13 @@ const ManageMemberScreen = () => {
   const [form, setForm] = useState(emptyForm);
   const [selectedId, setSelectedId] = useState(null);
 
-  /* Search & Filter */
+  // Search & Filter
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
 
   const readOnly = mode === 'view';
 
-  /* Role + Course Logic  */
+  // Role + Course Logic
   useEffect(() => {
     if (isRoleWithoutCourse(form.role)) {
       setForm((prev) => ({
@@ -76,7 +115,7 @@ const ManageMemberScreen = () => {
     }
   }, [form.role]);
 
-  /* Action */
+  // Action 
   const openAdd = () => {
     setForm(emptyForm);
     setMode('add');
@@ -116,12 +155,12 @@ const ManageMemberScreen = () => {
 
   const deleteMember = (id) => {
     if (Platform.OS === 'web') {
-      if (!window.confirm('Yakin ingin menghapus member ini?')) return;
+      if (!window.confirm('Are you sure want to delete?')) return;
     }
     setMembers((prev) => prev.filter((m) => m.id !== id));
   };
 
-  /* Filtered Data */
+  // Filtered Data
   const filteredMembers = members.filter((m) => {
     const matchSearch =
       m.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -133,7 +172,7 @@ const ManageMemberScreen = () => {
     return matchSearch && matchRole;
   });
 
-  /* Table */
+  // Table
   const renderItem = ({ item, index }) => (
     <View style={styles.row}>
       <Text style={styles.cell}>{index + 1}</Text>
@@ -173,7 +212,7 @@ const ManageMemberScreen = () => {
 
   return (
     <View style={styles.container}>
-      <WebNavbar activeScreen="Member" />
+      <WebNavbar activeScreen="Manage Member" />
 
       <View style={styles.content}>
         <View style={styles.header}>
@@ -194,7 +233,7 @@ const ManageMemberScreen = () => {
 
         {/* Filter */}
         <View style={styles.filterRow}>
-          {['All', 'Member', 'Teacher', 'Management'].map((r) => (
+          {['All', 'Member', 'Teacher', 'Instructor', 'Management'].map((r) => (
             <TouchableOpacity
               key={r}
               onPress={() => setRoleFilter(r)}
@@ -340,6 +379,7 @@ const ManageMemberScreen = () => {
                       'Pemrograman Web',
                       'Basis Data',
                       'Mobile Programming',
+                      'Machine Learning',
                     ]}
                   />
                 </Field>
@@ -369,7 +409,7 @@ const ManageMemberScreen = () => {
   );
 };
 
-/* Field */
+// Field
 const Field = ({ label, children }) => (
   <View style={styles.formItem}>
     <Text style={styles.label}>{label}</Text>
@@ -377,7 +417,7 @@ const Field = ({ label, children }) => (
   </View>
 );
 
-/* Styles */
+// Styles
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   content: { padding: 20 },
