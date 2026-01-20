@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import WebNavbar from '../../../components/WebNavbar';
 import { getAllUsers, createUser, updateUser, deleteUser } from '../../../api/user'; // Import API functions
 
+<<<<<<< HEAD
 interface User {
   id: string;
   name: string;
@@ -17,13 +18,83 @@ interface User {
 const emptyForm: User = {
   id: '',
   name: '',
+=======
+// Data Dummy
+const INITIAL_MEMBERS = [
+  {
+    id: 1,
+    fullName: 'Alfiansyah Cahyo Wicaksono',
+    dob: '2004-12-09',
+    gender: 'Male',
+    email: 'alfiansyah@lms.test',
+    password: 'password123',
+    phone: '08123456789',
+    registerDate: '2026-01-01',
+    role: 'Teacher',
+    status: true,
+    course: 'Pemrograman Web',
+  },
+  {
+    id: 2,
+    fullName: 'Eka Avriliana',
+    dob: '2005-04-27',
+    gender: 'Female',
+    email: 'ekaavril@lms.test',
+    password: 'password123',
+    phone: '08129876543',
+    registerDate: '2026-01-01',
+    role: 'Teacher',
+    status: true,
+    course: 'Mobile Programming',
+  },
+  {
+    id: 3,
+    fullName: 'Hesti Indriyani',
+    dob: '2004-12-10',
+    gender: 'Female',
+    email: 'hestiindriyani@lms.test',
+    password: 'password123',
+    phone: '08129080706',
+    registerDate: '2026-01-01',
+    role: 'Teacher',
+    status: true,
+    course: 'Basis Data',
+  },
+  {
+    id: 3,
+    fullName: 'Rodstein Fing Beta Lucson',
+    dob: '2003-04-20',
+    gender: 'Male',
+    email: 'luckycollage@lms.test',
+    password: 'password123',
+    phone: '08123040506',
+    registerDate: '2026-01-01',
+    role: 'Teacher',
+    status: true,
+    course: 'Machine Learning',
+  },
+];
+
+// Empty Form
+const emptyForm = {
+  fullName: '',
+  dob: '',
+  gender: '',
+>>>>>>> 0f027a5d2e3599703c9c85a48755cde19e543d8a
   email: '',
   password: '',
   role: '',
   status: false,
 };
 
+<<<<<<< HEAD
 /* Web Select */
+=======
+const isRoleWithoutCourse = (role) =>
+  role === 'Admin' || role === 'Management';
+
+// Web Select
+>>>>>>> 0f027a5d2e3599703c9c85a48755cde19e543d8a
 const WebSelect = ({ value, onChange, options, disabled }) => (
   <select
     value={value}
@@ -48,12 +119,13 @@ const ManageMemberScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* Search & Filter */
+  // Search & Filter
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
 
   const readOnly = mode === 'view';
 
+<<<<<<< HEAD
   const fetchMembers = async () => {
     setLoading(true);
     setError(null);
@@ -68,6 +140,15 @@ const ManageMemberScreen = () => {
       setError(err.message || 'Failed to fetch members');
     } finally {
       setLoading(false);
+=======
+  // Role + Course Logic
+  useEffect(() => {
+    if (isRoleWithoutCourse(form.role)) {
+      setForm((prev) => ({
+        ...prev,
+        course: '',
+      }));
+>>>>>>> 0f027a5d2e3599703c9c85a48755cde19e543d8a
     }
   };
 
@@ -87,7 +168,7 @@ const ManageMemberScreen = () => {
   }, [search]);
 
 
-  /* Action */
+  // Action 
   const openAdd = () => {
     setForm(emptyForm);
     setMode('add');
@@ -152,6 +233,7 @@ const ManageMemberScreen = () => {
 
   const removeMember = async (id: string) => {
     if (Platform.OS === 'web') {
+<<<<<<< HEAD
       if (!window.confirm('Are you sure you want to delete this member?')) return;
     }
 
@@ -166,10 +248,13 @@ const ManageMemberScreen = () => {
       Alert.alert('Error', err.message || 'Failed to delete member');
     } finally {
       setLoading(false);
+=======
+      if (!window.confirm('Are you sure want to delete?')) return;
+>>>>>>> 0f027a5d2e3599703c9c85a48755cde19e543d8a
     }
   };
 
-  /* Filtered Data */
+  // Filtered Data
   const filteredMembers = members.filter((m) => {
     const matchSearch =
       m.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -177,8 +262,13 @@ const ManageMemberScreen = () => {
     return matchSearch;
   });
 
+<<<<<<< HEAD
   /* Table */
   const renderItem = ({ item, index }: { item: User, index: number }) => (
+=======
+  // Table
+  const renderItem = ({ item, index }) => (
+>>>>>>> 0f027a5d2e3599703c9c85a48755cde19e543d8a
     <View style={styles.row}>
       <Text style={styles.cell}>{index + 1}</Text>
       <Text style={styles.cell}>{item.fullName}</Text>
@@ -217,7 +307,7 @@ const ManageMemberScreen = () => {
 
   return (
     <View style={styles.container}>
-      <WebNavbar activeScreen="Member" />
+      <WebNavbar activeScreen="Manage Member" />
 
       <View style={styles.content}>
         <View style={styles.header}>
@@ -238,7 +328,11 @@ const ManageMemberScreen = () => {
 
         {/* Filter */}
         <View style={styles.filterRow}>
+<<<<<<< HEAD
           {['All', 'admin', 'student', 'teacher', 'manager'].map((r) => (
+=======
+          {['All', 'Member', 'Teacher', 'Instructor', 'Management'].map((r) => (
+>>>>>>> 0f027a5d2e3599703c9c85a48755cde19e543d8a
             <TouchableOpacity
               key={r}
               onPress={() => setRoleFilter(r)}
@@ -335,6 +429,27 @@ const ManageMemberScreen = () => {
                   </Text>
                 </View>
               </Field>
+<<<<<<< HEAD
+=======
+
+              {/* Course Benar Benar Hilang */}
+              {!isRoleWithoutCourse(form.role) && (
+                <Field label="Course">
+                  <WebSelect
+                    value={form.course}
+                    disabled={readOnly}
+                    onChange={(v) => setForm({ ...form, course: v })}
+                    options={[
+                      'Please Select',
+                      'Pemrograman Web',
+                      'Basis Data',
+                      'Mobile Programming',
+                      'Machine Learning',
+                    ]}
+                  />
+                </Field>
+              )}
+>>>>>>> 0f027a5d2e3599703c9c85a48755cde19e543d8a
             </View>
 
             <View style={styles.modalActions}>
@@ -364,7 +479,7 @@ const ManageMemberScreen = () => {
   );
 };
 
-/* Field */
+// Field
 const Field = ({ label, children }) => (
   <View style={styles.formItem}>
     <Text style={styles.label}>{label}</Text>
@@ -372,7 +487,7 @@ const Field = ({ label, children }) => (
   </View>
 );
 
-/* Styles */
+// Styles
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   content: { padding: 20 },
