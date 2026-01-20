@@ -1,71 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, Switch, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, Switch, Platform, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import WebNavbar from '../../../components/WebNavbar';
-
-// Data Dummy
-const INITIAL_MEMBERS = [
-  {
-    id: 1,
-    fullName: 'Alfiansyah Cahyo Wicaksono',
-    dob: '2004-12-09',
-    gender: 'Male',
-    email: 'alfiansyah@lms.test',
-    password: 'password123',
-    phone: '08123456789',
-    registerDate: '2026-01-01',
-    role: 'Teacher',
-    status: true,
-  },
-  {
-    id: 2,
-    fullName: 'Eka Avriliana',
-    dob: '2005-04-27',
-    gender: 'Female',
-    email: 'ekaavril@lms.test',
-    password: 'password123',
-    phone: '08129876543',
-    registerDate: '2026-01-01',
-    role: 'Teacher',
-    status: true,
-  },
-  {
-    id: 3,
-    fullName: 'Hesti Indriyani',
-    dob: '2004-12-10',
-    gender: 'Female',
-    email: 'hestiindriyani@lms.test',
-    password: 'password123',
-    phone: '08129080706',
-    registerDate: '2026-01-01',
-    role: 'Teacher',
-    status: true,
-  },
-  {
-    id: 3,
-    fullName: 'Rodstein Fing Beta Lucson',
-    dob: '2003-04-20',
-    gender: 'Male',
-    email: 'luckycollage@lms.test',
-    password: 'password123',
-    phone: '08123040506',
-    registerDate: '2026-01-01',
-    role: 'Teacher',
-    status: true,
-  },
-];
+import { getAllUsers, createUser, updateUser, deleteUser } from '../../../api/user';
 
 // Empty Form
 const emptyForm = {
-  fullName: '',
-  dob: '',
-  gender: '',
+  name: '',
   email: '',
   password: '',
-  phone: '',
-  registerDate: '',
-  role: '',
-  status: false,
+  role: 'student',
+  status: 'active',
 };
 
 // Web Select
@@ -77,15 +22,16 @@ const WebSelect = ({ value, onChange, options, disabled }) => (
     style={styles.webInput}
   >
     {options.map((opt) => (
-      <option key={opt} value={opt}>
-        {opt}
+      <option key={opt.value} value={opt.value}>
+        {opt.label}
       </option>
     ))}
   </select>
 );
 
 const ManageMemberScreen = () => {
-  const [members, setMembers] = useState(INITIAL_MEMBERS);
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [mode, setMode] = useState('view'); // add | edit | view
   const [form, setForm] = useState(emptyForm);
@@ -97,6 +43,29 @@ const ManageMemberScreen = () => {
 
   const readOnly = mode === 'view';
 
+  // Fetch Data
+  const fetchMembers = async () => {
+    setLoading(true);
+    try {
+      const role = roleFilter === 'All' ? null : roleFilter.toLowerCase();
+      const data = await getAllUsers(role);
+      setMembers(data);
+    } catch (error) {
+      console.error(error);
+      if (Platform.OS === 'web') {
+        alert('Failed to fetch members: ' + error.message);
+      } else {
+        Alert.alert('Error', 'Failed to fetch members');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMembers();
+  }, [roleFilter]);
+
   // Action 
   const openAdd = () => {
     setForm(emptyForm);
@@ -105,60 +74,77 @@ const ManageMemberScreen = () => {
   };
 
   const openView = (item) => {
-    setForm(item);
+    setForm({
+      ...item,
+      password: '', // Don't show password
+    });
     setMode('view');
     setModalVisible(true);
   };
 
   const openEdit = (item) => {
-    setForm(item);
+    setForm({
+      ...item,
+      password: '', // Only fill if want to change
+    });
     setSelectedId(item.id);
     setMode('edit');
     setModalVisible(true);
   };
 
-  const saveMember = () => {
-    if (!form.fullName || !form.email) return;
-
-    if (mode === 'add') {
-      setMembers([...members, { ...form, id: Date.now() }]);
+  const saveMember = async () => {
+    if (!form.name || !form.email) {
+       alert('Name and Email are required');
+       return;
+    }
+    
+    if (mode === 'add' && !form.password) {
+       alert('Password is required for new user');
+       return;
     }
 
-    if (mode === 'edit') {
-      setMembers(
-        members.map((m) =>
-          m.id === selectedId ? { ...form, id: selectedId } : m
-        )
-      );
+    try {
+      if (mode === 'add') {
+        await createUser(form);
+      } else if (mode === 'edit') {
+        // If password empty, don't send it to backend
+        const updateData = { ...form };
+        if (!updateData.password) delete updateData.password;
+        await updateUser(selectedId, updateData);
+      }
+      setModalVisible(false);
+      fetchMembers();
+    } catch (error) {
+      alert('Error saving member: ' + error.message);
     }
-
-    setModalVisible(false);
   };
 
-  const deleteMember = (id) => {
+  const handleDelete = async (id) => {
     if (Platform.OS === 'web') {
       if (!window.confirm('Are you sure want to delete?')) return;
     }
-    setMembers((prev) => prev.filter((m) => m.id !== id));
+    try {
+      await deleteUser(id);
+      fetchMembers();
+    } catch (error) {
+      alert('Error deleting member: ' + error.message);
+    }
   };
 
-  // Filtered Data
+  // Filtered Data (Search on Client)
   const filteredMembers = members.filter((m) => {
     const matchSearch =
-      m.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      m.email.toLowerCase().includes(search.toLowerCase());
+      m.name?.toLowerCase().includes(search.toLowerCase()) ||
+      m.email?.toLowerCase().includes(search.toLowerCase());
 
-    const matchRole =
-      roleFilter === 'All' ? true : m.role === roleFilter;
-
-    return matchSearch && matchRole;
+    return matchSearch;
   });
 
   // Table
   const renderItem = ({ item, index }) => (
     <View style={styles.row}>
       <Text style={styles.cell}>{index + 1}</Text>
-      <Text style={styles.cell}>{item.fullName}</Text>
+      <Text style={styles.cell}>{item.name}</Text>
       <Text style={styles.cell}>{item.email}</Text>
       <Text style={styles.cell}>{item.role}</Text>
 
@@ -166,11 +152,11 @@ const ManageMemberScreen = () => {
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: item.status ? '#22c55e' : '#9ca3af' },
+            { backgroundColor: item.status === 'active' ? '#22c55e' : '#9ca3af' },
           ]}
         >
           <Text style={styles.statusText}>
-            {item.status ? 'Active' : 'Inactive'}
+            {item.status === 'active' ? 'Active' : 'Inactive'}
           </Text>
         </View>
       </View>
@@ -183,7 +169,7 @@ const ManageMemberScreen = () => {
           <Ionicons name="create" size={16} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => deleteMember(item.id)}
+          onPress={() => handleDelete(item.id)}
           style={styles.btnRed}
         >
           <Ionicons name="trash" size={16} color="#fff" />
@@ -215,17 +201,23 @@ const ManageMemberScreen = () => {
 
         {/* Filter */}
         <View style={styles.filterRow}>
-          {['All', 'Member', 'Teacher', 'Instructor', 'Management'].map((r) => (
+          {[
+            { label: 'All', value: 'All' },
+            { label: 'Student', value: 'Student' },
+            { label: 'Teacher', value: 'Teacher' },
+            { label: 'Manager', value: 'Manager' },
+            { label: 'Admin', value: 'Admin' }
+          ].map((r) => (
             <TouchableOpacity
-              key={r}
-              onPress={() => setRoleFilter(r)}
+              key={r.value}
+              onPress={() => setRoleFilter(r.value)}
               style={[
                 styles.filterBtn,
-                roleFilter === r && styles.filterActive,
+                roleFilter === r.value && styles.filterActive,
               ]}
             >
-              <Text style={{ color: roleFilter === r ? '#fff' : '#374151' }}>
-                {r}
+              <Text style={{ color: roleFilter === r.value ? '#fff' : '#374151' }}>
+                {r.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -241,11 +233,15 @@ const ManageMemberScreen = () => {
             <Text style={styles.th}>Action</Text>
           </View>
 
-          <FlatList
-            data={filteredMembers}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
-          />
+          {loading ? (
+            <ActivityIndicator size="large" color="#0b3c89" style={{ margin: 20 }} />
+          ) : (
+            <FlatList
+              data={filteredMembers}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id.toString()}
+            />
+          )}
         </View>
       </View>
 
@@ -253,36 +249,15 @@ const ManageMemberScreen = () => {
       <Modal transparent visible={modalVisible}>
         <View style={styles.modalBg}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Personal Info</Text>
+            <Text style={styles.modalTitle}>User Information</Text>
 
             <View style={styles.formGrid}>
               <Field label="Full Name">
                 <TextInput
-                  value={form.fullName}
+                  value={form.name}
                   editable={!readOnly}
-                  onChangeText={(v) => setForm({ ...form, fullName: v })}
+                  onChangeText={(v) => setForm({ ...form, name: v })}
                   style={styles.input}
-                />
-              </Field>
-
-              <Field label="Date of Birth">
-                <input
-                  type="date"
-                  disabled={readOnly}
-                  value={form.dob}
-                  onChange={(e) =>
-                    setForm({ ...form, dob: e.target.value })
-                  }
-                  style={styles.webInput}
-                />
-              </Field>
-
-              <Field label="Gender">
-                <WebSelect
-                  value={form.gender}
-                  disabled={readOnly}
-                  onChange={(v) => setForm({ ...form, gender: v })}
-                  options={['Please Select','Male', 'Female']}
                 />
               </Field>
 
@@ -297,31 +272,12 @@ const ManageMemberScreen = () => {
 
               <Field label="Password">
                 <TextInput
+                  placeholder={mode === 'edit' ? '(Leave blank to keep current)' : ''}
                   value={form.password}
                   editable={!readOnly}
+                  secureTextEntry
                   onChangeText={(v) => setForm({ ...form, password: v })}
                   style={styles.input}
-                />
-              </Field>
-
-              <Field label="Phone">
-                <TextInput
-                  value={form.phone}
-                  editable={!readOnly}
-                  onChangeText={(v) => setForm({ ...form, phone: v })}
-                  style={styles.input}
-                />
-              </Field>
-
-              <Field label="Register Date">
-                <input
-                  type="date"
-                  disabled={readOnly}
-                  value={form.registerDate}
-                  onChange={(e) =>
-                    setForm({ ...form, registerDate: e.target.value })
-                  }
-                  style={styles.webInput}
                 />
               </Field>
 
@@ -330,21 +286,26 @@ const ManageMemberScreen = () => {
                   value={form.role}
                   disabled={readOnly}
                   onChange={(v) => setForm({ ...form, role: v })}
-                  options={['Please Select','Admin', 'Teacher','Instructor', 'Management', 'Member']}
+                  options={[
+                    { label: 'Admin', value: 'admin' },
+                    { label: 'Teacher', value: 'teacher' },
+                    { label: 'Manager', value: 'manager' },
+                    { label: 'Student', value: 'student' }
+                  ]}
                 />
               </Field>
 
               <Field label="Status">
                 <View style={styles.switchRow}>
                   <Switch
-                    value={form.status}
+                    value={form.status === 'active'}
                     disabled={readOnly}
                     onValueChange={(v) =>
-                      setForm({ ...form, status: v })
+                      setForm({ ...form, status: v ? 'active' : 'inactive' })
                     }
                   />
-                  <Text style={{ marginLeft: 8 }}>
-                    {form.status ? 'Active' : 'Inactive'}
+                  <Text style={{ marginLeft: 8, textTransform: 'capitalize' }}>
+                    {form.status}
                   </Text>
                 </View>
               </Field>
