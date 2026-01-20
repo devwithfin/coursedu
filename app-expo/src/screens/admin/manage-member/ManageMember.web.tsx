@@ -16,7 +16,6 @@ const INITIAL_MEMBERS = [
     registerDate: '2026-01-01',
     role: 'Teacher',
     status: true,
-    course: 'Pemrograman Web',
   },
   {
     id: 2,
@@ -29,7 +28,6 @@ const INITIAL_MEMBERS = [
     registerDate: '2026-01-01',
     role: 'Teacher',
     status: true,
-    course: 'Mobile Programming',
   },
   {
     id: 3,
@@ -42,7 +40,6 @@ const INITIAL_MEMBERS = [
     registerDate: '2026-01-01',
     role: 'Teacher',
     status: true,
-    course: 'Basis Data',
   },
   {
     id: 3,
@@ -55,7 +52,6 @@ const INITIAL_MEMBERS = [
     registerDate: '2026-01-01',
     role: 'Teacher',
     status: true,
-    course: 'Machine Learning',
   },
 ];
 
@@ -70,11 +66,7 @@ const emptyForm = {
   registerDate: '',
   role: '',
   status: false,
-  course: '',
 };
-
-const isRoleWithoutCourse = (role) =>
-  role === 'Admin' || role === 'Management';
 
 // Web Select
 const WebSelect = ({ value, onChange, options, disabled }) => (
@@ -104,16 +96,6 @@ const ManageMemberScreen = () => {
   const [roleFilter, setRoleFilter] = useState('All');
 
   const readOnly = mode === 'view';
-
-  // Role + Course Logic
-  useEffect(() => {
-    if (isRoleWithoutCourse(form.role)) {
-      setForm((prev) => ({
-        ...prev,
-        course: '',
-      }));
-    }
-  }, [form.role]);
 
   // Action 
   const openAdd = () => {
@@ -366,24 +348,6 @@ const ManageMemberScreen = () => {
                   </Text>
                 </View>
               </Field>
-
-              {/* Course Benar Benar Hilang */}
-              {!isRoleWithoutCourse(form.role) && (
-                <Field label="Course">
-                  <WebSelect
-                    value={form.course}
-                    disabled={readOnly}
-                    onChange={(v) => setForm({ ...form, course: v })}
-                    options={[
-                      'Please Select',
-                      'Pemrograman Web',
-                      'Basis Data',
-                      'Mobile Programming',
-                      'Machine Learning',
-                    ]}
-                  />
-                </Field>
-              )}
             </View>
 
             <View style={styles.modalActions}>
