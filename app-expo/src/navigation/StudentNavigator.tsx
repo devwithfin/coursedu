@@ -87,7 +87,6 @@ export default function StudentNavigator() {
         { text: "OK", onPress: async () => {
             try {
               await authLogout(); // Use the logout function from AuthContext
-              navigation.replace('Auth', undefined);
             } catch (error: unknown) {
               Alert.alert("Logout Error", (error as Error).message || "Failed to log out.");
             }
