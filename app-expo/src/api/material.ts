@@ -7,7 +7,6 @@ let API_BASE_URL;
 if (Platform.OS === 'web') {
   API_BASE_URL = 'http://localhost:3000';
 } else {
-  // Make sure you have the API URL in your app.json's extra section for mobile
   API_BASE_URL = Constants.expoConfig.extra?.api_url_mobile;
 }
 
