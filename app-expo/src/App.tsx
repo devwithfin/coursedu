@@ -15,18 +15,28 @@ const linking = {
   config: {
     screens: {
       Auth: {
-        path: 'auth',
+        path: '', // Auth routes at the root
         screens: {
           Login: 'login',
         },
       },
       Admin: {
-        path: '', // Admin routes at the root
+        path: 'admin', // Admin routes moved to /admin
         screens: {
           Dashboard: 'dashboard',
           'Manage Member': 'member',
           'Manage Academy': 'academy',
           'Manage Enrollment': 'enrollment',
+        },
+      },
+      Student: {
+        path: 'student',
+        screens: {
+          Home: 'home',
+          Academy: 'academy',
+          Enroll: 'enroll',
+          Attendance: 'attendance',
+          Profile: 'profile',
         },
       },
     },
