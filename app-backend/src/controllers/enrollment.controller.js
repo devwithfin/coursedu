@@ -58,29 +58,29 @@ exports.getAll = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-    try {
-        const { student_id, course_id } = req.body;
+  try {
+    const { student_id, course_id } = req.body;
 
-        // Check if enrollment already exists
-        const existingEnrollment = await Enrollment.findOne({
-            where: {
-                student_id: student_id,
-                course_id: course_id,
-            },
-        });
+    // Check if enrollment already exists
+    const existingEnrollment = await Enrollment.findOne({
+      where: {
+        student_id: student_id,
+        course_id: course_id,
+      },
+    });
 
-        if (existingEnrollment) {
-            return res.status(409).json({ message: 'Enrollment for this course already exists for this student.' });
-        }
-
-        const enrollment = await Enrollment.create({
-            student_id,
-            course_id,
-            is_approved: 0, // Default to 0 (pending approval)
-        });
-
-        res.status(201).json(enrollment);
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating enrollment', error: error.message });
+    if (existingEnrollment) {
+      return res.status(409).json({ message: 'Enrollment for this course already exists for this student.' });
     }
+
+    const enrollment = await Enrollment.create({
+      student_id,
+      course_id,
+      is_approved: 0, // Default to 0 (pending approval)
+    });
+
+    res.status(201).json(enrollment);
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating enrollment', error: error.message });
+  }
 };

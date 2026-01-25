@@ -1,65 +1,45 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import WebNavbar from '../../../components/WebNavbar';
 import AcceptedCard from './AcceptedCard';
 
-export default function AdminEnrollmentWeb() {
+export default function ManageEnrollment() {
   const [activeTab, setActiveTab] = useState<'queue' | 'accepted'>('queue');
+  const [queueData, setQueueData] = useState<any[]>([]);
+  const [acceptedData, setAcceptedData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [queueData, setQueueData] = useState([
-    {
-      id: 1,
-      name: 'Ariana Grande',
-      date: '05 Jan, 2026',
-      status: 'Pending',
-      course: 'Mempelajari Cara Menanam Pohon Sawit di Sumatera',
-    },
-    {
-      id: 2,
-      name: 'Ariana Grande',
-      date: '05 Jan, 2026',
-      status: 'Pending',
-      course: 'Mempelajari Cara Menanam Pohon Sawit di Sumatera',
-    },
-  ]);
-
-  const [acceptedData, setAcceptedData] = useState([
-    {
-      id: 100,
-      code: '00001',
-      name: 'Ariana Grande',
-      date: '05 Jan, 2026',
-      phone: '+123 4455 678',
-      email: 'ariana@example.com',
-      course: 'Mempelajari Cara Menanam Pohon Sawit di Sumatera',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-      status: 'Active',
-    },
-  ]);
-
-  const handleApprove = (item: any) => {
-    setQueueData(prev => prev.filter(q => q.id !== item.id));
-
-    setAcceptedData(prev => [
-      ...prev,
-      {
-        id: item.id,
-        code: String(item.id).padStart(5, '0'),
-        name: item.name,
-        date: item.date,
-        phone: '-',
-        email: '-',
-        course: item.course,
-        avatar: 'https://i.pravatar.cc/150',
-        status: 'Active',
-      },
-    ]);
-
-    setActiveTab('accepted');
+  /* ================= FETCH ================= */
+  const fetchQueue = async () => {
+    setLoading(true);
+    const res = await fetch('http://localhost:3000/enrollments?is_approved=0');
+    const data = await res.json();
+    setQueueData(data);
+    setLoading(false);
   };
 
-  const handleDecline = (id: number) => {
-    setQueueData(prev => prev.filter(q => q.id !== id));
+  const fetchAccepted = async () => {
+    setLoading(true);
+    const res = await fetch('http://localhost:3000/enrollments?is_approved=1');
+    const data = await res.json();
+    setAcceptedData(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (activeTab === 'queue') fetchQueue();
+    if (activeTab === 'accepted') fetchAccepted();
+  }, [activeTab]);
+
+  /* ================= ACTION ================= */
+  const handleApprove = async (id: number) => {
+    await fetch(`http://localhost:3000/enrollments/${id}/approve`, {
+      method: 'PUT',
+    });
+
+    fetchQueue();
+    fetchAccepted();
+    setActiveTab('accepted');
   };
 
   return (
@@ -69,7 +49,7 @@ export default function AdminEnrollmentWeb() {
       <View style={styles.content}>
         <Text style={styles.title}>Approval Member</Text>
 
-        {/* Tabs & Filter */}
+        {/* ================= TOP BAR ================= */}
         <View style={styles.topBar}>
           <View style={styles.tabs}>
             <TouchableOpacity onPress={() => setActiveTab('accepted')}>
@@ -77,6 +57,7 @@ export default function AdminEnrollmentWeb() {
                 Accepted
               </Text>
             </TouchableOpacity>
+
             <TouchableOpacity onPress={() => setActiveTab('queue')}>
               <Text style={[styles.tab, activeTab === 'queue' && styles.activeTab]}>
                 In Queue
@@ -92,7 +73,7 @@ export default function AdminEnrollmentWeb() {
           </View>
         </View>
 
-        {/* ================= QUEUE ================= */}
+        {/* ================= QUEUE TABLE ================= */}
         {activeTab === 'queue' && (
           <>
             <View style={styles.tableHeader}>
@@ -105,8 +86,13 @@ export default function AdminEnrollmentWeb() {
 
             {queueData.map(item => (
               <View key={item.id} style={styles.row}>
-                <View style={styles.colName}><Text>{item.name}</Text></View>
-                <View style={styles.colDate}><Text>{item.date}</Text></View>
+                <View style={styles.colName}>
+                  <Text>Student #{item.user_id}</Text>
+                </View>
+
+                <View style={styles.colDate}>
+                  <Text>{new Date(item.enrolled_at).toLocaleDateString()}</Text>
+                </View>
 
                 <View style={styles.colStatus}>
                   <View style={styles.badgePending}>
@@ -115,7 +101,7 @@ export default function AdminEnrollmentWeb() {
                 </View>
 
                 <View style={styles.colCourse}>
-                  <Text numberOfLines={2}>{item.course}</Text>
+                  <Text numberOfLines={2}>{item.course?.title}</Text>
                 </View>
 
                 <View style={styles.colAction}>
@@ -126,9 +112,10 @@ export default function AdminEnrollmentWeb() {
                     >
                       <Text style={styles.declineText}>Decline</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                       style={styles.approve}
-                      onPress={() => handleApprove(item)}
+                      onPress={() => handleApprove(item.id)}
                     >
                       <Text style={styles.approveText}>Approve</Text>
                     </TouchableOpacity>
@@ -139,18 +126,33 @@ export default function AdminEnrollmentWeb() {
           </>
         )}
 
-        {/* ================= ACCEPTED ================= */}
+        {/* ================= ACCEPTED CARD ================= */}
         {activeTab === 'accepted' && (
           <View style={styles.cardGrid}>
             {acceptedData.map(item => (
-              <AcceptedCard key={item.id} data={item} />
+              <AcceptedCard
+                key={item.id}
+                data={{
+                  id: item.id,
+                  code: String(item.id).padStart(5, '0'),
+                  name: item.student?.name || 'Unknown',
+                  date: new Date(item.enrolled_at).toLocaleDateString(),
+                  phone: item.student?.phone || '-',
+                  email: item.student?.email || '-',
+                  course: item.course?.title || '-',
+                  avatar: item.student?.avatar || 'https://i.pravatar.cc/150',
+                }}
+              />
             ))}
           </View>
         )}
+
+        {loading && <Text>Loading...</Text>}
       </View>
     </View>
   );
 }
+/* ================= STYLES ================= */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   content: { padding: 30 },
@@ -198,11 +200,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  headerText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
+  headerText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
 
   row: {
     flexDirection: 'row',
@@ -226,11 +224,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
   },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#92400e',
-  },
+  badgeText: { fontSize: 12, fontWeight: '600', color: '#92400e' },
 
   actions: { flexDirection: 'row', gap: 10 },
   decline: {
@@ -250,9 +244,5 @@ const styles = StyleSheet.create({
   },
   approveText: { color: '#22c55e', fontWeight: '600' },
 
-  cardGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 20,
-  },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 20 },
 });
