@@ -1,75 +1,68 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import WebNavbar from '../../../components/WebNavbar';
 import AcceptedCard from './AcceptedCard';
 
-export default function AdminEnrollmentWeb() {
+const API_URL = 'http://localhost:3000/enrollments';
+
+/* ================== SAFE GETTER ================== */
+const getUserName = (item: any) => item?.user?.name || 'Unknown User';
+const getUserEmail = (item: any) => item?.user?.email || '-';
+const getCourseTitle = (item: any) => item?.course?.title || 'Unknown Course';
+
+export default function ManageEnrollmentWeb() {
   const [activeTab, setActiveTab] = useState<'queue' | 'accepted'>('queue');
+  const [queueData, setQueueData] = useState<any[]>([]);
+  const [acceptedData, setAcceptedData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [queueData, setQueueData] = useState([
-    {
-      id: 1,
-      name: 'Ariana Grande',
-      date: '05 Jan, 2026',
-      status: 'Pending',
-      course: 'Mempelajari Cara Menanam Pohon Sawit di Sumatera',
-    },
-    {
-      id: 2,
-      name: 'Ariana Grande',
-      date: '05 Jan, 2026',
-      status: 'Pending',
-      course: 'Mempelajari Cara Menanam Pohon Sawit di Sumatera',
-    },
-  ]);
+  const fetchEnrollments = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Fetch failed');
 
-  const [acceptedData, setAcceptedData] = useState([
-    {
-      id: 100,
-      code: '00001',
-      name: 'Ariana Grande',
-      date: '05 Jan, 2026',
-      phone: '+123 4455 678',
-      email: 'ariana@example.com',
-      course: 'Mempelajari Cara Menanam Pohon Sawit di Sumatera',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-      status: 'Active',
-    },
-  ]);
+      const data = await res.json();
 
-  const handleApprove = (item: any) => {
-    setQueueData(prev => prev.filter(q => q.id !== item.id));
-
-    setAcceptedData(prev => [
-      ...prev,
-      {
-        id: item.id,
-        code: String(item.id).padStart(5, '0'),
-        name: item.name,
-        date: item.date,
-        phone: '-',
-        email: '-',
-        course: item.course,
-        avatar: 'https://i.pravatar.cc/150',
-        status: 'Active',
-      },
-    ]);
-
-    setActiveTab('accepted');
+      setQueueData(data.filter((e: any) => e.is_approved === 0));
+      setAcceptedData(data.filter((e: any) => e.is_approved === 1));
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDecline = (id: number) => {
-    setQueueData(prev => prev.filter(q => q.id !== id));
+  useEffect(() => {
+    fetchEnrollments();
+  }, []);
+
+  const handleApprove = async (id: number) => {
+    try {
+      const res = await fetch(`${API_URL}/${id}/approve`, {
+        method: 'PUT',
+      });
+
+      if (!res.ok) {
+        alert('Failed to approve enrollment');
+        return;
+      }
+
+      await fetchEnrollments();
+      setActiveTab('accepted');
+    } catch (err) {
+      console.error('Approve error:', err);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <WebNavbar activeScreen="Enrollments" />
+      <WebNavbar activeScreen="Manage Enrollment" />
 
       <View style={styles.content}>
         <Text style={styles.title}>Approval Member</Text>
 
-        {/* Tabs & Filter */}
+        {/* ================= TOP BAR ================= */}
         <View style={styles.topBar}>
           <View style={styles.tabs}>
             <TouchableOpacity onPress={() => setActiveTab('accepted')}>
@@ -77,6 +70,7 @@ export default function AdminEnrollmentWeb() {
                 Accepted
               </Text>
             </TouchableOpacity>
+
             <TouchableOpacity onPress={() => setActiveTab('queue')}>
               <Text style={[styles.tab, activeTab === 'queue' && styles.activeTab]}>
                 In Queue
@@ -105,8 +99,17 @@ export default function AdminEnrollmentWeb() {
 
             {queueData.map(item => (
               <View key={item.id} style={styles.row}>
-                <View style={styles.colName}><Text>{item.name}</Text></View>
-                <View style={styles.colDate}><Text>{item.date}</Text></View>
+                <View style={styles.colName}>
+                  <Text>{getUserName(item)}</Text>
+                </View>
+
+                <View style={styles.colDate}>
+                  <Text>
+                    {item.enrolled_at
+                      ? new Date(item.enrolled_at).toLocaleDateString()
+                      : '-'}
+                  </Text>
+                </View>
 
                 <View style={styles.colStatus}>
                   <View style={styles.badgePending}>
@@ -115,27 +118,27 @@ export default function AdminEnrollmentWeb() {
                 </View>
 
                 <View style={styles.colCourse}>
-                  <Text numberOfLines={2}>{item.course}</Text>
+                  <Text numberOfLines={2}>
+                    {getCourseTitle(item)}
+                  </Text>
                 </View>
 
                 <View style={styles.colAction}>
-                  <View style={styles.actions}>
-                    <TouchableOpacity
-                      style={styles.decline}
-                      onPress={() => handleDecline(item.id)}
-                    >
-                      <Text style={styles.declineText}>Decline</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.approve}
-                      onPress={() => handleApprove(item)}
-                    >
-                      <Text style={styles.approveText}>Approve</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity
+                    style={styles.approve}
+                    onPress={() => handleApprove(item.id)}
+                  >
+                    <Text style={styles.approveText}>Approve</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ))}
+
+            {!loading && queueData.length === 0 && (
+              <Text style={{ textAlign: 'center', marginTop: 40 }}>
+                No pending enrollments
+              </Text>
+            )}
           </>
         )}
 
@@ -143,7 +146,20 @@ export default function AdminEnrollmentWeb() {
         {activeTab === 'accepted' && (
           <View style={styles.cardGrid}>
             {acceptedData.map(item => (
-              <AcceptedCard key={item.id} data={item} />
+              <AcceptedCard
+                key={item.id}
+                data={{
+                  id: item.id,
+                  code: String(item.id).padStart(5, '0'),
+                  name: getUserName(item),
+                  date: item.enrolled_at
+                    ? new Date(item.enrolled_at).toLocaleDateString()
+                    : '-',
+                  email: getUserEmail(item),
+                  course: getCourseTitle(item),
+                  avatar: 'https://i.pravatar.cc/150',
+                }}
+              />
             ))}
           </View>
         )}
@@ -151,6 +167,8 @@ export default function AdminEnrollmentWeb() {
     </View>
   );
 }
+
+/* ================= STYLES ================= */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   content: { padding: 30 },
@@ -167,8 +185,8 @@ const styles = StyleSheet.create({
   tab: { fontSize: 16, color: '#6b7280' },
   activeTab: {
     color: '#2563eb',
-    fontWeight: 'bold',
-    borderBottomWidth: 2,
+    fontWeight: '700',
+    borderBottomWidth: 3,
     borderBottomColor: '#2563eb',
     paddingBottom: 6,
   },
@@ -232,15 +250,6 @@ const styles = StyleSheet.create({
     color: '#92400e',
   },
 
-  actions: { flexDirection: 'row', gap: 10 },
-  decline: {
-    borderWidth: 1,
-    borderColor: '#ef4444',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  declineText: { color: '#ef4444', fontWeight: '600' },
   approve: {
     borderWidth: 1,
     borderColor: '#22c55e',
