@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,182 +8,159 @@ import {
   FlatList,
   Modal,
   Switch,
+  ActivityIndicator,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import WebNavbar from '../../../components/WebNavbar';
+import { getAllCourses } from '../../../api/course';
+import axios from 'axios';
 
-// Course + teacher
-const COURSE_TEACHER_MAP = {
-  'Pemrograman Web': [
-    'Alfiansyah Cahyo Wicaksono',
-    'Eka Nur Aprilia',
-  ],
-  'Basis Data': [
-    'Hesti Indriyani',
-    'Muhamad Gilang Acchadipa Nazar',
-  ],
-  'Mobile Programming': [
-    'Wandi Aditya',
-    'Eka Avriliana',
-  ],
-  'Machine Learning': [
-    'Rodstein Fing Beta Lucson',
-    'Fasya Hasna Aidah',
-  ],
-};
-
-// Data Dummy
-const INITIAL_ACADEMIES = [
-  {
-    id: 1,
-    course: 'Pemrograman Web',
-    courseDescription: 'Belajar HTML, CSS, JavaScript, dan React',
-    teacher: 'Alfiansyah Cahyo Wicaksono',
-    startDate: '2026-01-01',
-    endDate: '2030-01-01',
-    status: true,
-  },
-  {
-    id: 2,
-    course: 'Mobile Programming',
-    courseDescription: 'Belajar pengembangan aplikasi mobile menggunakan React Native dan Expo',
-    teacher: 'Eka Avriliana',
-    startDate: '2026-01-01',
-    endDate: '2030-01-01',
-    status: true,
-  },
-  {
-    id: 3,
-    course: 'Basis Data',
-    courseDescription: 'Belajar konsep database, ERD, SQL, dan implementasi MySQL',
-    teacher: 'Hesti Indriyani',
-    startDate: '2026-01-01',
-    endDate: '2030-01-01',
-    status: true,
-  },
-  {
-    id: 4,
-    course: 'Machine Learning',
-    courseDescription: 'Pengenalan machine learning, supervised & unsupervised learning, dan implementasi dasar',
-    teacher: 'Rodstein Fing Beta Lucson',
-    startDate: '2026-01-01',
-    endDate: '2030-01-01',
-    status: true,
-  },
-];
-
-// Empty Form
+/* ================= DEFAULT FORM ================= */
 const emptyForm = {
-  course: '',
-  courseDescription: '',
-  teacher: '',
-  startDate: '',
-  endDate: '',
-  status: false,
+  title: '',
+  description: '',
+  teacher_id: '',
+  status: 'inactive',
 };
 
-// Web Select
-const WebSelect = ({ value, onChange, options }) => (
-  <select value={value} onChange={(e) => onChange(e.target.value)} style={styles.webInput}>
-    <option value="">Please Select</option>
-    {options.map((opt) => (
-      <option key={opt} value={opt}>
-        {opt}
-      </option>
-    ))}
-  </select>
-);
-
+/* ================= MAIN ================= */
 const ManageAcademyScreen = () => {
-  const [academies, setAcademies] = useState(INITIAL_ACADEMIES);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [modalVisible, setModalVisible] = useState(false);
-  const [mode, setMode] = useState<'add' | 'edit'>('add');
-  const [form, setForm] = useState(emptyForm);
+  const [mode, setMode] = useState<'add' | 'edit' | 'view'>('view');
+  const [form, setForm] = useState<any>(emptyForm);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [teacherOptions, setTeacherOptions] = useState<string[]>([]);
 
-  // Course + Teacher Auto
-  useEffect(() => {
-    if (form.course && COURSE_TEACHER_MAP[form.course]) {
-      setTeacherOptions(COURSE_TEACHER_MAP[form.course]);
-      setForm((prev) => ({ ...prev, teacher: '' }));
-    } else {
-      setTeacherOptions([]);
+  const [search, setSearch] = useState('');
+
+  const readOnly = mode === 'view';
+
+  /* ================= FETCH ================= */
+  const fetchCourses = async () => {
+    setLoading(true);
+    try {
+      const data = await getAllCourses();
+      setCourses(data);
+    } catch (err: any) {
+      alert('Failed fetch course: ' + err.message);
+    } finally {
+      setLoading(false);
     }
-  }, [form.course]);
+  };
 
-  // Action 
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  /* ================= SEARCH FILTER ================= */
+  const filteredCourses = courses.filter((item: any) => {
+    const keyword = search.toLowerCase();
+
+    const courseTitle = item.title?.toLowerCase() || '';
+    const teacherName =
+      item.teacher?.name?.toLowerCase() ||
+      String(item.teacher_id || '').toLowerCase();
+
+    return (
+      courseTitle.includes(keyword) ||
+      teacherName.includes(keyword)
+    );
+  });
+
+  /* ================= ACTION ================= */
   const openAdd = () => {
     setForm(emptyForm);
     setMode('add');
     setModalVisible(true);
   };
 
-  const openEdit = (item) => {
+  const openView = (item: any) => {
+    setForm(item);
+    setMode('view');
+    setModalVisible(true);
+  };
+
+  const openEdit = (item: any) => {
     setForm(item);
     setSelectedId(item.id);
-    setTeacherOptions(COURSE_TEACHER_MAP[item.course] || []);
     setMode('edit');
     setModalVisible(true);
   };
 
-  const saveAcademy = () => {
-    if (!form.course || !form.teacher || !form.startDate || !form.endDate) return;
-
-    if (mode === 'add') {
-      setAcademies([...academies, { ...form, id: Date.now() }]);
+  const saveCourse = async () => {
+    if (!form.title || !form.teacher_id) {
+      alert('Title & Teacher are required');
+      return;
     }
 
-    if (mode === 'edit') {
-      setAcademies(
-        academies.map((a) =>
-          a.id === selectedId ? { ...form, id: selectedId } : a
-        )
-      );
+    try {
+      if (mode === 'add') {
+        await axios.post('http://localhost:3000/courses', form);
+      } else if (mode === 'edit' && selectedId) {
+        await axios.put(`http://localhost:3000/courses/${selectedId}`, form);
+      }
+      setModalVisible(false);
+      fetchCourses();
+    } catch (err: any) {
+      alert('Save failed: ' + err.message);
     }
-
-    setModalVisible(false);
   };
 
-  const deleteAcademy = (id) => {
-    if (Platform.OS === 'web' && !window.confirm('Yakin ingin menghapus academy ini?')) return;
-    setAcademies((prev) => prev.filter((a) => a.id !== id));
+  const handleDelete = async (id: number) => {
+    if (Platform.OS === 'web') {
+      if (!window.confirm('Delete this course?')) return;
+    }
+    try {
+      await axios.delete(`http://localhost:3000/courses/${id}`);
+      fetchCourses();
+    } catch (err: any) {
+      alert('Delete failed: ' + err.message);
+    }
   };
 
-  /* Table */
-  const renderItem = ({ item, index }) => (
+  /* ================= TABLE ROW ================= */
+  const renderItem = ({ item, index }: any) => (
     <View style={styles.row}>
       <Text style={styles.cell}>{index + 1}</Text>
-      <Text style={styles.cell}>{item.course}</Text>
-      <Text style={styles.cell}>{item.teacher}</Text>
-      <Text style={styles.cell}>{item.startDate}</Text>
-      <Text style={styles.cell}>{item.endDate}</Text>
+      <Text style={styles.cell}>{item.title}</Text>
+      <Text style={styles.cell}>
+        {item.teacher?.name || item.teacher_id}
+      </Text>
 
       <View style={styles.cell}>
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: item.status ? '#22c55e' : '#9ca3af' },
+            {
+              backgroundColor:
+                item.status === 'active' ? '#22c55e' : '#9ca3af',
+            },
           ]}
         >
           <Text style={styles.statusText}>
-            {item.status ? 'Active' : 'Inactive'}
+            {item.status === 'active' ? 'Active' : 'Inactive'}
           </Text>
         </View>
       </View>
 
       <View style={styles.action}>
+        <TouchableOpacity onPress={() => openView(item)} style={styles.btnBlue}>
+          <Ionicons name="eye" size={16} color="#fff" />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => openEdit(item)} style={styles.btnYellow}>
           <Ionicons name="create" size={16} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => deleteAcademy(item.id)} style={styles.btnRed}>
+        <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.btnRed}>
           <Ionicons name="trash" size={16} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>
   );
 
+  /* ================= UI ================= */
   return (
     <View style={styles.container}>
       <WebNavbar activeScreen="Manage Academy" />
@@ -193,8 +170,19 @@ const ManageAcademyScreen = () => {
           <Text style={styles.title}>Manage Academy</Text>
           <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
             <Ionicons name="add" size={18} color="#fff" />
-            <Text style={styles.addText}>Add Academy</Text>
+            <Text style={styles.addText}>Add Course</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* SEARCH */}
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={18} color="#6b7280" />
+          <TextInput
+            placeholder="Search course or teacher..."
+            value={search}
+            onChangeText={setSearch}
+            style={styles.searchInput}
+          />
         </View>
 
         <View style={styles.table}>
@@ -202,96 +190,88 @@ const ManageAcademyScreen = () => {
             <Text style={styles.th}>#</Text>
             <Text style={styles.th}>Course</Text>
             <Text style={styles.th}>Teacher</Text>
-            <Text style={styles.th}>Start</Text>
-            <Text style={styles.th}>End</Text>
             <Text style={styles.th}>Status</Text>
             <Text style={styles.th}>Action</Text>
           </View>
 
-          <FlatList data={academies} renderItem={renderItem} />
+          {loading ? (
+            <ActivityIndicator size="large" style={{ margin: 20 }} />
+          ) : (
+            <FlatList
+              data={filteredCourses}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id.toString()}
+              style={{ maxHeight: 520 }}
+            />
+          )}
         </View>
       </View>
 
-      {/* Modal */}
+      {/* ================= MODAL ================= */}
       <Modal transparent visible={modalVisible}>
         <View style={styles.modalBg}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>
-              {mode === 'add' ? 'Add Academy' : 'Edit Academy'}
-            </Text>
+            <Text style={styles.modalTitle}>Course Information</Text>
 
-            <View style={styles.formGrid}>
-              <Field label="Course">
-                <WebSelect
-                  value={form.course}
-                  onChange={(v) => setForm({ ...form, course: v })}
-                  options={Object.keys(COURSE_TEACHER_MAP)}
-                />
-              </Field>
+            <View style={styles.formItem}>
+              <Text style={styles.label}>Course Title</Text>
+              <TextInput
+                style={styles.input}
+                editable={!readOnly}
+                value={form.title}
+                onChangeText={(v) => setForm({ ...form, title: v })}
+              />
+            </View>
 
-              <Field label="Teacher">
-                <WebSelect
-                  value={form.teacher}
-                  onChange={(v) => setForm({ ...form, teacher: v })}
-                  options={teacherOptions}
-                />
-              </Field>
+            <View style={styles.formItem}>
+              <Text style={styles.label}>Teacher ID</Text>
+              <TextInput
+                style={styles.input}
+                editable={!readOnly}
+                value={String(form.teacher_id)}
+                onChangeText={(v) => setForm({ ...form, teacher_id: v })}
+              />
+            </View>
 
-              <Field full label="Course Description">
-                <TextInput
-                  value={form.courseDescription}
-                  multiline
-                  style={[styles.input, { height: 80 }]}
-                  onChangeText={(v) =>
-                    setForm({ ...form, courseDescription: v })
-                  }
-                />
-              </Field>
+            <View style={styles.formItem}>
+              <Text style={styles.label}>Description</Text>
+              <TextInput
+                style={[styles.input, { height: 80 }]}
+                multiline
+                editable={!readOnly}
+                value={form.description}
+                onChangeText={(v) =>
+                  setForm({ ...form, description: v })
+                }
+              />
+            </View>
 
-              <Field label="Start Date">
-                <input
-                  type="date"
-                  value={form.startDate}
-                  onChange={(e) =>
-                    setForm({ ...form, startDate: e.target.value })
-                  }
-                  style={styles.webInput}
-                />
-              </Field>
-
-              <Field label="End Date">
-                <input
-                  type="date"
-                  value={form.endDate}
-                  onChange={(e) =>
-                    setForm({ ...form, endDate: e.target.value })
-                  }
-                  style={styles.webInput}
-                />
-              </Field>
-
-              <Field full label="Status">
-                <View style={styles.switchRow}>
-                  <Switch
-                    value={form.status}
-                    onValueChange={(v) => setForm({ ...form, status: v })}
-                  />
-                  <Text style={{ marginLeft: 8 }}>
-                    {form.status ? 'Active' : 'Inactive'}
-                  </Text>
-                </View>
-              </Field>
+            <View style={styles.switchRow}>
+              <Switch
+                value={form.status === 'active'}
+                disabled={readOnly}
+                onValueChange={(v) =>
+                  setForm({ ...form, status: v ? 'active' : 'inactive' })
+                }
+              />
+              <Text style={{ marginLeft: 8 }}>{form.status}</Text>
             </View>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setModalVisible(false)}
+              >
                 <Text>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={saveAcademy}>
-                <Text style={{ color: '#fff' }}>
-                  {mode === 'add' ? 'Add' : 'Update'}
-                </Text>
-              </TouchableOpacity>
+
+              {mode !== 'view' && (
+                <TouchableOpacity style={styles.saveBtn} onPress={saveCourse}>
+                  <Text style={{ color: '#fff' }}>
+                    {mode === 'add' ? 'Add' : 'Update'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
@@ -300,150 +280,98 @@ const ManageAcademyScreen = () => {
   );
 };
 
-// Field
-const Field = ({ label, children, full }) => (
-  <View style={{ width: full ? '100%' : '48%' }}>
-    <Text style={styles.label}>{label}</Text>
-    {children}
-  </View>
-);
-
-// Styles
+/* ================= STYLES ================= */
 const styles = StyleSheet.create({
-  container: { 
-      flex: 1, 
-      backgroundColor: '#f9fafb',
+  container: { flex: 1, backgroundColor: '#f9fafb' },
+  content: { padding: 20 },
+  title: { fontSize: 26, fontWeight: 'bold' },
+
+  header: { flexDirection: 'row', justifyContent: 'space-between' },
+  addBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#0b3c89',
+    padding: 10,
+    borderRadius: 8,
   },
-  content: { 
-    padding: 20,
+  addText: { color: '#fff', marginLeft: 6 },
+
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 16,
+    gap: 8,
   },
-  title: { 
-    fontSize: 26, 
-    fontWeight: 'bold', 
-  },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between',
-  },
-  addBtn: { 
-    flexDirection: 'row', 
-    backgroundColor: '#0b3c89', 
-    padding: 10, 
-    borderRadius: 8, 
-  },
-  addText: { 
-    color: '#fff', 
-    marginLeft: 6,
-  },
-  table: { 
-    backgroundColor: '#fff', 
-    borderRadius: 10, 
-    marginTop: 20,
-  },
-  tableHead: { 
-    flexDirection: 'row', 
-    backgroundColor: '#f3f4f6', 
-    paddingVertical: 10, 
-  },
-  th: { 
-    flex: 1, 
-    textAlign: 'center', 
-    fontWeight: '700',
-    },
-  row: { 
-    flexDirection: 'row', 
+  searchInput: { flex: 1, fontSize: 14 },
+
+  table: { backgroundColor: '#fff', borderRadius: 10, marginTop: 20 },
+  tableHead: {
+    flexDirection: 'row',
+    backgroundColor: '#f3f4f6',
     paddingVertical: 10,
   },
-  cell: { 
-    flex: 1, 
-    textAlign: 'center', 
+  th: { flex: 1, textAlign: 'center', fontWeight: '700' },
+  row: { flexDirection: 'row', paddingVertical: 10 },
+  cell: { flex: 1, textAlign: 'center', alignItems: 'center' },
+
+  statusBadge: {
+    minWidth: 80,
+    height: 26,
+    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  statusBadge: { 
-    minWidth: 80, 
-    height: 26, 
-    borderRadius: 20, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-  },
-  statusText: { 
-    color: '#fff', 
-    fontSize: 12,
-  },
-  action: { 
-    flex: 1, 
-    flexDirection: 'row', 
-    justifyContent: 'center', 
+  statusText: { color: '#fff', fontSize: 12 },
+
+  action: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
     gap: 6,
   },
-  btnYellow: { 
-    backgroundColor: '#facc15', 
-    padding: 6, 
-    borderRadius: 6,
-  },
-  btnRed: { 
-    backgroundColor: '#ef4444', 
-    padding: 6, 
-    borderRadius: 6,
-  },
-  modalBg: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.4)', 
-    justifyContent: 'center', 
+  btnBlue: { backgroundColor: '#1d4ed8', padding: 6, borderRadius: 6 },
+  btnYellow: { backgroundColor: '#facc15', padding: 6, borderRadius: 6 },
+  btnRed: { backgroundColor: '#ef4444', padding: 6, borderRadius: 6 },
+
+  modalBg: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  modal: { 
-    backgroundColor: '#fff', 
-    width: 800, 
-    padding: 20, 
-    borderRadius: 12,
-  },
-  modalTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
-    marginBottom: 12,
-  },
-  formGrid: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    gap: 16,
-  },
-  label: { 
-    fontSize: 12, 
-    marginBottom: 4,
-  },
-  input: { 
-    borderWidth: 1, 
-    borderColor: '#e5e7eb', 
-    borderRadius: 6, 
+  modal: { backgroundColor: '#fff', width: 600, padding: 20, borderRadius: 12 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+
+  formItem: { marginBottom: 12 },
+  label: { fontSize: 12, marginBottom: 4 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 6,
     padding: 8,
   },
-  webInput: { 
-    width: '100%', 
-    padding: 8, 
-    borderRadius: 6, 
-    borderColor: '1px solid #e5e7eb',
-  },
-  modalActions: { 
-    flexDirection: 'row', 
-    justifyContent: 'flex-end', 
-    gap: 10, 
+
+  switchRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
     marginTop: 20,
   },
-  cancelBtn: { 
+  cancelBtn: {
     padding: 10,
-    borderWidth: 1, 
-    borderColor: '#e5e7eb', 
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
     borderRadius: 8,
   },
-  saveBtn: { 
-    padding: 10, 
-    backgroundColor: '#0b3c89', 
+  saveBtn: {
+    padding: 10,
+    backgroundColor: '#0b3c89',
     borderRadius: 8,
-  },
-  switchRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center',
   },
 });
 

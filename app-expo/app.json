@@ -15,7 +15,11 @@
     },
     "web": {},
     "extra": {
+<<<<<<< HEAD
       "api_url_mobile": "http://192.168.1.6:3000"
+=======
+      "api_url_mobile": "http://192.168.18.115:3000"
+>>>>>>> 6fee70e93f1e9ab8dea7aea34eda1d372ab1eee3
     }
   }
 }

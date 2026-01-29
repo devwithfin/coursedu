@@ -1,140 +1,206 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Modal } from 'react-native';
+import { useState } from 'react';
 
-export default function AcceptedCard({ data }: any) {
-    return (
-        <View style={styles.card}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.id}># ENR-{data.id}</Text>
-                <Text style={[styles.badge, styles.active]}>
-                    Active
-                </Text>
-            </View>
+type AcceptedCardProps = {
+  data: {
+    id: number;
+    code: string;
+    name: string;
+    date: string;
+    email: string;
+    course: string;
+    avatar: string;
+  };
+};
 
-            {/* Profile */}
-            <View style={styles.profile}>
-                <Image
-                    source={{ uri: data.avatar || 'https://i.pravatar.cc/150' }}
-                    style={styles.avatar}
-                />
+export default function AcceptedCard({ data }: AcceptedCardProps) {
+  const [open, setOpen] = useState(false);
 
-                <View>
-                    <Text style={styles.label}>Full Name</Text>
-                    <Text style={styles.value}>{data.student?.name || '-'}</Text>
-                </View>
-
-                <View style={{ marginLeft: 'auto' }}>
-                    <Text style={styles.label}>Date of Register</Text>
-                    <Text style={styles.value}>
-                        {new Date(data.enrolled_at).toLocaleDateString()}
-                    </Text>
-                </View>
-            </View>
-
-            {/* Contact */}
-            <View style={styles.row}>
-                <View>
-                    <Text style={styles.label}>Telephone Number</Text>
-                    <Text style={styles.value}>{data.student?.phone || '-'}</Text>
-                </View>
-
-                <View>
-                    <Text style={styles.label}>E-Mail</Text>
-                    <Text style={styles.value}>{data.student?.email || '-'}</Text>
-                </View>
-            </View>
-
-            {/* Course */}
-            <View style={styles.course}>
-                <Text style={styles.label}>Free Course</Text>
-                <Text style={styles.courseText}>{data.course?.title}</Text>
-            </View>
-
-            {/* Action */}
-            <TouchableOpacity style={styles.viewBtn}>
-                <Text style={styles.viewText}>View</Text>
-            </TouchableOpacity>
+  return (
+    <>
+      {/* ================= CARD ================= */}
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.id}># {data.code}</Text>
+          <Text style={styles.badge}>Accepted</Text>
         </View>
-    );
+
+        <View style={styles.profile}>
+          <Image source={{ uri: data.avatar }} style={styles.avatar} />
+          <View>
+            <Text style={styles.label}>Full Name</Text>
+            <Text style={styles.value}>{data.name}</Text>
+          </View>
+
+          <View style={{ marginLeft: 'auto' }}>
+            <Text style={styles.label}>Date of Register</Text>
+            <Text style={styles.value}>{data.date}</Text>
+          </View>
+        </View>
+
+        <View style={styles.row}>
+          <View>
+            <Text style={styles.label}>E-Mail</Text>
+            <Text style={styles.value}>{data.email}</Text>
+          </View>
+        </View>
+
+        <View style={styles.course}>
+          <Text style={styles.label}>Free Course</Text>
+          <Text style={styles.courseText}>{data.course}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.viewBtn} onPress={() => setOpen(true)}>
+          <Text style={styles.viewText}>View</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ================= MODAL ================= */}
+      <Modal visible={open} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>Member Detail</Text>
+
+            <Image source={{ uri: data.avatar }} style={styles.modalAvatar} />
+
+            <Text style={styles.modalItem}><Text style={styles.bold}>Name:</Text> {data.name}</Text>
+            <Text style={styles.modalItem}><Text style={styles.bold}>Email:</Text> {data.email}</Text>
+            <Text style={styles.modalItem}><Text style={styles.bold}>Course:</Text> {data.course}</Text>
+            <Text style={styles.modalItem}><Text style={styles.bold}>Register Date:</Text> {data.date}</Text>
+            <Text style={styles.modalItem}><Text style={styles.bold}>Member Code:</Text> #{data.code}</Text>
+
+            <TouchableOpacity style={styles.closeBtn} onPress={() => setOpen(false)}>
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
 }
+
 const styles = StyleSheet.create({
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        width: '32%',
-        minWidth: 320,
-    },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    width: '32%',
+    minWidth: 320,
+  },
 
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  id: { fontWeight: 'bold' },
 
-    id: { fontWeight: 'bold' },
+  badge: {
+    backgroundColor: '#dcfce7',
+    color: '#166534',
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    fontWeight: '600',
+  },
 
-    badge: {
-        fontSize: 12,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 999,
-        fontWeight: '600',
-    },
+  profile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
 
-    active: {
-        backgroundColor: '#dcfce7',
-        color: '#166534',
-    },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
 
-    profile: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        marginBottom: 16,
-    },
+  label: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  value: {
+    fontWeight: '600',
+  },
 
-    avatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-    },
+  course: {
+    marginBottom: 20,
+  },
+  courseText: {
+    fontWeight: '600',
+    marginTop: 4,
+  },
 
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
+  viewBtn: {
+    borderWidth: 1,
+    borderColor: '#22c55e',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  viewText: {
+    color: '#22c55e',
+    fontWeight: '600',
+  },
 
-    label: {
-        fontSize: 12,
-        color: '#6b7280',
-        marginBottom: 2,
-    },
+  /* ========== MODAL ========== */
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
-    value: {
-        fontWeight: '600',
-    },
+  modal: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    width: 380,
+  },
 
-    course: { marginBottom: 20 },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
 
-    courseText: {
-        fontWeight: '600',
-        marginTop: 4,
-    },
+  modalAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
 
-    viewBtn: {
-        borderWidth: 1,
-        borderColor: '#22c55e',
-        paddingVertical: 10,
-        borderRadius: 10,
-        alignItems: 'center',
-    },
+  modalItem: {
+    marginBottom: 8,
+  },
 
-    viewText: {
-        color: '#22c55e',
-        fontWeight: '600',
-    },
+  bold: {
+    fontWeight: '700',
+  },
+
+  closeBtn: {
+    marginTop: 20,
+    backgroundColor: '#22c55e',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+  closeText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
 });
