@@ -4,6 +4,7 @@ import WebNavbar from '../../../components/WebNavbar';
 import AcceptedCard from './AcceptedCard';
 
 const API_URL = 'http://localhost:3000/enrollments';
+const ITEMS_PER_PAGE = 10;
 
 /* ================== SAFE GETTER ================== */
 const getUserName = (item: any) => item?.user?.name || 'Unknown User';
@@ -16,18 +17,21 @@ export default function ManageEnrollmentWeb() {
   const [acceptedData, setAcceptedData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [searchText, setSearchText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+
+  /* ================= FETCH ================= */
   const fetchEnrollments = async () => {
     setLoading(true);
     try {
       const res = await fetch(API_URL);
-      if (!res.ok) throw new Error('Fetch failed');
-
       const data = await res.json();
 
       setQueueData(data.filter((e: any) => e.is_approved === 0));
       setAcceptedData(data.filter((e: any) => e.is_approved === 1));
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -38,22 +42,78 @@ export default function ManageEnrollmentWeb() {
   }, []);
 
   const handleApprove = async (id: number) => {
-    try {
-      const res = await fetch(`${API_URL}/${id}/approve`, {
-        method: 'PUT',
-      });
-
-      if (!res.ok) {
-        alert('Failed to approve enrollment');
-        return;
-      }
-
-      await fetchEnrollments();
-      setActiveTab('accepted');
-    } catch (err) {
-      console.error('Approve error:', err);
-    }
+    await fetch(`${API_URL}/${id}/approve`, { method: 'PUT' });
+    fetchEnrollments();
+    setActiveTab('accepted');
+    setCurrentPage(1);
   };
+
+  /* ================= FILTER QUEUE ================= */
+  const filteredQueue = queueData.filter(item => {
+    const keyword = searchText.toLowerCase().trim();
+
+    const name = getUserName(item).toLowerCase();
+    const course = getCourseTitle(item).toLowerCase();
+
+    const matchSearch =
+      !keyword || name.includes(keyword) || course.includes(keyword);
+
+    if (!item.enrolled_at) return false;
+    const d = new Date(item.enrolled_at);
+
+    const matchMonth =
+      d.getMonth() === selectedMonth.getMonth() &&
+      d.getFullYear() === selectedMonth.getFullYear();
+
+    return matchSearch && matchMonth;
+  });
+
+  /* ================= FILTER ACCEPTED ================= */
+  const filteredAccepted = acceptedData.filter(item => {
+    const keyword = searchText.toLowerCase().trim();
+
+    const name = getUserName(item).toLowerCase();
+    const course = getCourseTitle(item).toLowerCase();
+
+    const matchSearch =
+      !keyword || name.includes(keyword) || course.includes(keyword);
+
+    if (!item.enrolled_at) return false;
+    const d = new Date(item.enrolled_at);
+
+    const matchMonth =
+      d.getMonth() === selectedMonth.getMonth() &&
+      d.getFullYear() === selectedMonth.getFullYear();
+
+    return matchSearch && matchMonth;
+  });
+
+  /* ================= PAGINATION ================= */
+  const totalQueuePages = Math.ceil(filteredQueue.length / ITEMS_PER_PAGE);
+  const totalAcceptedPages = Math.ceil(filteredAccepted.length / ITEMS_PER_PAGE);
+
+  const paginatedQueue = filteredQueue.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const paginatedAccepted = filteredAccepted.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  /* ================= MONTH ================= */
+  const changeMonth = (type: 'prev' | 'next') => {
+    const d = new Date(selectedMonth);
+    d.setMonth(type === 'prev' ? d.getMonth() - 1 : d.getMonth() + 1);
+    setSelectedMonth(d);
+    setCurrentPage(1);
+  };
+
+  const monthLabel = selectedMonth.toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
 
   return (
     <View style={styles.container}>
@@ -65,13 +125,23 @@ export default function ManageEnrollmentWeb() {
         {/* ================= TOP BAR ================= */}
         <View style={styles.topBar}>
           <View style={styles.tabs}>
-            <TouchableOpacity onPress={() => setActiveTab('accepted')}>
+            <TouchableOpacity
+              onPress={() => {
+                setActiveTab('accepted');
+                setCurrentPage(1);
+              }}
+            >
               <Text style={[styles.tab, activeTab === 'accepted' && styles.activeTab]}>
                 Accepted
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => setActiveTab('queue')}>
+            <TouchableOpacity
+              onPress={() => {
+                setActiveTab('queue');
+                setCurrentPage(1);
+              }}
+            >
               <Text style={[styles.tab, activeTab === 'queue' && styles.activeTab]}>
                 In Queue
               </Text>
@@ -79,9 +149,26 @@ export default function ManageEnrollmentWeb() {
           </View>
 
           <View style={styles.filters}>
-            <TextInput placeholder="Search member" style={styles.search} />
+            <TextInput
+              placeholder="Search Member"
+              style={styles.search}
+              value={searchText}
+              onChangeText={t => {
+                setSearchText(t);
+                setCurrentPage(1);
+              }}
+            />
+
             <View style={styles.month}>
-              <Text>January 2026</Text>
+              <TouchableOpacity onPress={() => changeMonth('prev')}>
+                <Text>{'<'}</Text>
+              </TouchableOpacity>
+
+              <Text style={{ marginHorizontal: 8 }}>{monthLabel}</Text>
+
+              <TouchableOpacity onPress={() => changeMonth('next')}>
+                <Text>{'>'}</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -97,19 +184,10 @@ export default function ManageEnrollmentWeb() {
               <View style={styles.colAction}><Text style={styles.headerText}>Action</Text></View>
             </View>
 
-            {queueData.map(item => (
+            {paginatedQueue.map(item => (
               <View key={item.id} style={styles.row}>
-                <View style={styles.colName}>
-                  <Text>{getUserName(item)}</Text>
-                </View>
-
-                <View style={styles.colDate}>
-                  <Text>
-                    {item.enrolled_at
-                      ? new Date(item.enrolled_at).toLocaleDateString()
-                      : '-'}
-                  </Text>
-                </View>
+                <View style={styles.colName}><Text>{getUserName(item)}</Text></View>
+                <View style={styles.colDate}><Text>{new Date(item.enrolled_at).toLocaleDateString()}</Text></View>
 
                 <View style={styles.colStatus}>
                   <View style={styles.badgePending}>
@@ -118,9 +196,7 @@ export default function ManageEnrollmentWeb() {
                 </View>
 
                 <View style={styles.colCourse}>
-                  <Text numberOfLines={2}>
-                    {getCourseTitle(item)}
-                  </Text>
+                  <Text numberOfLines={2}>{getCourseTitle(item)}</Text>
                 </View>
 
                 <View style={styles.colAction}>
@@ -134,34 +210,80 @@ export default function ManageEnrollmentWeb() {
               </View>
             ))}
 
-            {!loading && queueData.length === 0 && (
+            {!loading && filteredQueue.length === 0 && (
               <Text style={{ textAlign: 'center', marginTop: 40 }}>
                 No pending enrollments
               </Text>
+            )}
+
+            {totalQueuePages > 1 && (
+              <View style={styles.pagination}>
+                <TouchableOpacity
+                  disabled={currentPage === 1}
+                  onPress={() => setCurrentPage(p => p - 1)}
+                >
+                  <Text>{'<'}</Text>
+                </TouchableOpacity>
+
+                <Text>Page {currentPage} of {totalQueuePages}</Text>
+
+                <TouchableOpacity
+                  disabled={currentPage === totalQueuePages}
+                  onPress={() => setCurrentPage(p => p + 1)}
+                >
+                  <Text>{'>'}</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </>
         )}
 
         {/* ================= ACCEPTED ================= */}
         {activeTab === 'accepted' && (
-          <View style={styles.cardGrid}>
-            {acceptedData.map(item => (
-              <AcceptedCard
-                key={item.id}
-                data={{
-                  id: item.id,
-                  code: String(item.id).padStart(5, '0'),
-                  name: getUserName(item),
-                  date: item.enrolled_at
-                    ? new Date(item.enrolled_at).toLocaleDateString()
-                    : '-',
-                  email: getUserEmail(item),
-                  course: getCourseTitle(item),
-                  avatar: 'https://i.pravatar.cc/150',
-                }}
-              />
-            ))}
-          </View>
+          <>
+            <View style={styles.cardGrid}>
+              {paginatedAccepted.map(item => (
+                <AcceptedCard
+                  key={item.id}
+                  data={{
+                    id: item.id,
+                    code: String(item.id).padStart(5, '0'),
+                    name: getUserName(item),
+                    date: new Date(item.enrolled_at).toLocaleDateString(),
+                    email: getUserEmail(item),
+                    course: getCourseTitle(item),
+                    avatar: 'https://i.pravatar.cc/150',
+                  }}
+                />
+              ))}
+            </View>
+
+            {!loading && filteredAccepted.length === 0 && (
+              <Text style={{ textAlign: 'center', marginTop: 40 }}>
+                No accepted members
+              </Text>
+            )}
+
+            {totalAcceptedPages > 1 && (
+              <View style={styles.pagination}>
+                <TouchableOpacity
+                  disabled={currentPage === 1}
+                  onPress={() => setCurrentPage(p => p - 1)}
+                >
+                  <Text>{'<'}</Text>
+                </TouchableOpacity>
+
+                <Text>Page {currentPage} of {totalAcceptedPages}</Text>
+
+                <TouchableOpacity
+                  disabled={currentPage === totalAcceptedPages}
+                  onPress={() => setCurrentPage(p => p + 1)}
+                >
+                  <Text>{'>'}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
         )}
       </View>
     </View>
@@ -198,14 +320,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    width: 200,
+    width: 220,
   },
+
   month: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   tableHeader: {
@@ -216,11 +341,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  headerText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
+  headerText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
 
   row: {
     flexDirection: 'row',
@@ -244,11 +365,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
   },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#92400e',
-  },
+  badgeText: { fontSize: 12, fontWeight: '600', color: '#92400e' },
 
   approve: {
     borderWidth: 1,
@@ -263,5 +380,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 20,
+  },
+
+  pagination: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginTop: 24,
   },
 });

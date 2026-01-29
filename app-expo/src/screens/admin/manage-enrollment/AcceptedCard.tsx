@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Modal } from 'react-native';
+import { useState } from 'react';
 
 type AcceptedCardProps = {
   data: {
@@ -13,42 +14,68 @@ type AcceptedCardProps = {
 };
 
 export default function AcceptedCard({ data }: AcceptedCardProps) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.id}># {data.code}</Text>
-        <Text style={styles.badge}>Accepted</Text>
-      </View>
-
-      <View style={styles.profile}>
-        <Image source={{ uri: data.avatar }} style={styles.avatar} />
-        <View>
-          <Text style={styles.label}>Full Name</Text>
-          <Text style={styles.value}>{data.name}</Text>
+    <>
+      {/* ================= CARD ================= */}
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.id}># {data.code}</Text>
+          <Text style={styles.badge}>Accepted</Text>
         </View>
 
-        <View style={{ marginLeft: 'auto' }}>
-          <Text style={styles.label}>Date of Register</Text>
-          <Text style={styles.value}>{data.date}</Text>
+        <View style={styles.profile}>
+          <Image source={{ uri: data.avatar }} style={styles.avatar} />
+          <View>
+            <Text style={styles.label}>Full Name</Text>
+            <Text style={styles.value}>{data.name}</Text>
+          </View>
+
+          <View style={{ marginLeft: 'auto' }}>
+            <Text style={styles.label}>Date of Register</Text>
+            <Text style={styles.value}>{data.date}</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.row}>
-        <View>
-          <Text style={styles.label}>E-Mail</Text>
-          <Text style={styles.value}>{data.email}</Text>
+        <View style={styles.row}>
+          <View>
+            <Text style={styles.label}>E-Mail</Text>
+            <Text style={styles.value}>{data.email}</Text>
+          </View>
         </View>
+
+        <View style={styles.course}>
+          <Text style={styles.label}>Free Course</Text>
+          <Text style={styles.courseText}>{data.course}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.viewBtn} onPress={() => setOpen(true)}>
+          <Text style={styles.viewText}>View</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.course}>
-        <Text style={styles.label}>Free Course</Text>
-        <Text style={styles.courseText}>{data.course}</Text>
-      </View>
+      {/* ================= MODAL ================= */}
+      <Modal visible={open} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>Member Detail</Text>
 
-      <TouchableOpacity style={styles.viewBtn}>
-        <Text style={styles.viewText}>View</Text>
-      </TouchableOpacity>
-    </View>
+            <Image source={{ uri: data.avatar }} style={styles.modalAvatar} />
+
+            <Text style={styles.modalItem}><Text style={styles.bold}>Name:</Text> {data.name}</Text>
+            <Text style={styles.modalItem}><Text style={styles.bold}>Email:</Text> {data.email}</Text>
+            <Text style={styles.modalItem}><Text style={styles.bold}>Course:</Text> {data.course}</Text>
+            <Text style={styles.modalItem}><Text style={styles.bold}>Register Date:</Text> {data.date}</Text>
+            <Text style={styles.modalItem}><Text style={styles.bold}>Member Code:</Text> #{data.code}</Text>
+
+            <TouchableOpacity style={styles.closeBtn} onPress={() => setOpen(false)}>
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -62,6 +89,7 @@ const styles = StyleSheet.create({
     width: '32%',
     minWidth: 320,
   },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -122,6 +150,57 @@ const styles = StyleSheet.create({
   },
   viewText: {
     color: '#22c55e',
+    fontWeight: '600',
+  },
+
+  /* ========== MODAL ========== */
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  modal: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    width: 380,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+
+  modalAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+
+  modalItem: {
+    marginBottom: 8,
+  },
+
+  bold: {
+    fontWeight: '700',
+  },
+
+  closeBtn: {
+    marginTop: 20,
+    backgroundColor: '#22c55e',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+  closeText: {
+    color: '#fff',
     fontWeight: '600',
   },
 });
