@@ -157,7 +157,7 @@ export default function ManageEnrollmentWeb() {
                     : '-',
                   email: getUserEmail(item),
                   course: getCourseTitle(item),
-                  avatar: 'https://i.pravatar.cc/150',
+                  avatar: 'https://hips.hearstapps.com/hmg-prod/images/ariana_grande_photo_jon_kopaloff_getty_images_465687098.jpg?resize=1200:*',
                 }}
               />
             ))}
