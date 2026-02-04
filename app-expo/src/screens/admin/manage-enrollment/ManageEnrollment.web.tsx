@@ -6,7 +6,7 @@ import AcceptedCard from './AcceptedCard';
 const API_URL = 'http://localhost:3000/enrollments';
 const ITEMS_PER_PAGE = 10;
 
-/* ================== SAFE GETTER ================== */
+/* ================= SAFE GETTER ================= */
 const getUserName = (item: any) => item?.user?.name || 'Unknown User';
 const getUserEmail = (item: any) => item?.user?.email || '-';
 const getCourseTitle = (item: any) => item?.course?.title || 'Unknown Course';
@@ -43,50 +43,35 @@ export default function ManageEnrollmentWeb() {
 
   const handleApprove = async (id: number) => {
     await fetch(`${API_URL}/${id}/approve`, { method: 'PUT' });
-    fetchEnrollments();
+    await fetchEnrollments();
     setActiveTab('accepted');
     setCurrentPage(1);
   };
 
-  /* ================= FILTER QUEUE ================= */
-  const filteredQueue = queueData.filter(item => {
+  /* ================= FILTER FUNCTION ================= */
+  const filterData = (data: any[]) => {
     const keyword = searchText.toLowerCase().trim();
 
-    const name = getUserName(item).toLowerCase();
-    const course = getCourseTitle(item).toLowerCase();
+    return data.filter(item => {
+      const name = getUserName(item).toLowerCase();
+      const course = getCourseTitle(item).toLowerCase();
 
-    const matchSearch =
-      !keyword || name.includes(keyword) || course.includes(keyword);
+      const matchSearch =
+        !keyword || name.includes(keyword) || course.includes(keyword);
 
-    if (!item.enrolled_at) return false;
-    const d = new Date(item.enrolled_at);
+      if (!item.enrolled_at) return false;
 
-    const matchMonth =
-      d.getMonth() === selectedMonth.getMonth() &&
-      d.getFullYear() === selectedMonth.getFullYear();
+      const d = new Date(item.enrolled_at);
+      const matchMonth =
+        d.getMonth() === selectedMonth.getMonth() &&
+        d.getFullYear() === selectedMonth.getFullYear();
 
-    return matchSearch && matchMonth;
-  });
+      return matchSearch && matchMonth;
+    });
+  };
 
-  /* ================= FILTER ACCEPTED ================= */
-  const filteredAccepted = acceptedData.filter(item => {
-    const keyword = searchText.toLowerCase().trim();
-
-    const name = getUserName(item).toLowerCase();
-    const course = getCourseTitle(item).toLowerCase();
-
-    const matchSearch =
-      !keyword || name.includes(keyword) || course.includes(keyword);
-
-    if (!item.enrolled_at) return false;
-    const d = new Date(item.enrolled_at);
-
-    const matchMonth =
-      d.getMonth() === selectedMonth.getMonth() &&
-      d.getFullYear() === selectedMonth.getFullYear();
-
-    return matchSearch && matchMonth;
-  });
+  const filteredQueue = filterData(queueData);
+  const filteredAccepted = filterData(acceptedData);
 
   /* ================= PAGINATION ================= */
   const totalQueuePages = Math.ceil(filteredQueue.length / ITEMS_PER_PAGE);
@@ -187,7 +172,9 @@ export default function ManageEnrollmentWeb() {
             {paginatedQueue.map(item => (
               <View key={item.id} style={styles.row}>
                 <View style={styles.colName}><Text>{getUserName(item)}</Text></View>
-                <View style={styles.colDate}><Text>{new Date(item.enrolled_at).toLocaleDateString()}</Text></View>
+                <View style={styles.colDate}>
+                  <Text>{new Date(item.enrolled_at).toLocaleDateString()}</Text>
+                </View>
 
                 <View style={styles.colStatus}>
                   <View style={styles.badgePending}>
