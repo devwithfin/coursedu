@@ -8,6 +8,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  token: string; // Add token property
   // Add other user properties as needed
 }
 
@@ -31,13 +32,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        // Commented out to ensure it always starts at Login as per user request
-        /*
+        console.log('AuthContext: Loading user from AsyncStorage...');
         const storedUser = await AsyncStorage.getItem('user');
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          console.log('AuthContext: User loaded from AsyncStorage:', parsedUser.email);
+        } else {
+          console.log('AuthContext: No user found in AsyncStorage.');
         }
-        */
       } catch (error) {
         console.error('Failed to load user from async storage:', error);
       } finally {
@@ -51,10 +54,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(true);
     try {
       const response = await apiLogin(email, password);
-      const fetchedUser: User = response.user; // Assuming response.user contains the User object
-      setUser(fetchedUser);
-      await AsyncStorage.setItem('user', JSON.stringify(fetchedUser));
-      return fetchedUser;
+      // Construct the full user object including the token
+      const fetchedUserWithToken: User = { ...response.user, token: response.token };
+      
+      console.log('AuthContext: User logged in:', fetchedUserWithToken.email);
+      if (fetchedUserWithToken.token) {
+        console.log('AuthContext: User token available.');
+      } else {
+        console.log('AuthContext: User token IS NOT available!');
+      }
+      setUser(fetchedUserWithToken);
+      await AsyncStorage.setItem('user', JSON.stringify(fetchedUserWithToken));
+      return fetchedUserWithToken;
     } finally {
       setLoading(false);
     }

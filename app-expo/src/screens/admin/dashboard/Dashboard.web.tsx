@@ -1,13 +1,53 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { useEffect, useState, useContext } from 'react';
 import WebNavbar from '../../../components/WebNavbar';
+import { getAdminStats } from '../../../api/admin';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function AdminDashboardWeb() {
-  // Dummy data
-  const stats = [
-    { label: 'Students', value: 1240 },
-    { label: 'Teachers', value: 85 },
-    { label: 'Courses', value: 42 },
-    { label: 'Pending Approval', value: 17 },
+  const { user } = useAuth();
+  const [adminStats, setAdminStats] = useState({
+    students: 0,
+    teachers: 0,
+    courses: 0,
+    pendingApproval: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    console.log('Dashboard.web.tsx: Component mounted or user/token changed.');
+    console.log('Dashboard.web.tsx: Current user object:', user);
+    console.log('Dashboard.web.tsx: User token:', user?.token ? 'Present' : 'Missing');
+
+    const fetchStats = async () => {
+      if (!user?.token) {
+        console.log('Dashboard.web.tsx: User token missing, setting error.');
+        setError('User not authenticated');
+        setLoading(false);
+        return;
+      }
+      console.log('Dashboard.web.tsx: Fetching stats with token...');
+      try {
+        const data = await getAdminStats(user.token);
+        console.log('Dashboard.web.tsx: Data received from API:', data);
+        setAdminStats(data);
+      } catch (err) {
+        setError('Failed to fetch admin statistics.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [user?.token]);
+
+  const statsDisplay = [
+    { label: 'Students', value: adminStats.students },
+    { label: 'Teachers', value: adminStats.teachers },
+    { label: 'Courses', value: adminStats.courses },
+    { label: 'Pending Approval', value: adminStats.pendingApproval },
   ];
 
   return (
@@ -17,14 +57,19 @@ export default function AdminDashboardWeb() {
       <View style={styles.content}>
         <Text style={styles.title}>Admin Dashboard</Text>
 
-        <View style={styles.cardContainer}>
-          {stats.map((item, index) => (
-            <View key={index} style={styles.card}>
-              <Text style={styles.cardValue}>{item.value}</Text>
-              <Text style={styles.cardLabel}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
+        {loading && <ActivityIndicator size="large" color="#00796b" />}
+        {error && <Text style={styles.errorText}>{error}</Text>}
+
+        {!loading && !error && (
+          <View style={styles.cardContainer}>
+            {statsDisplay.map((item, index) => (
+              <View key={index} style={styles.card}>
+                <Text style={styles.cardValue}>{item.value}</Text>
+                <Text style={styles.cardLabel}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -45,7 +90,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     color: '#00796b',
   },
-
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+  },
   cardContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
