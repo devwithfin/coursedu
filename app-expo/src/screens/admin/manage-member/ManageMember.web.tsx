@@ -249,7 +249,7 @@ const ManageMemberScreen = () => {
                   <Text style={styles.label}>{label}</Text>
                   <TextInput
                     style={styles.input}
-                    editable={!readOnly && key !== 'password'}
+                    editable={!readOnly}
                     secureTextEntry={key === 'password'}
                     value={form[key]}
                     onChangeText={(v) =>
