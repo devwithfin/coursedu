@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jan 17, 2026 at 08:49 AM
+-- Generation Time: Feb 09, 2026 at 02:39 PM
 -- Server version: 5.7.33
 -- PHP Version: 8.2.29
 
@@ -168,7 +168,8 @@ CREATE TABLE `enrollments` (
 INSERT INTO `enrollments` (`id`, `student_id`, `course_id`, `is_approved`, `enrolled_at`) VALUES
 (1, 3, 1, 1, '2026-01-16 07:39:26'),
 (2, 3, 2, 1, '2026-01-16 07:39:26'),
-(3, 4, 1, 0, '2026-01-16 07:39:26');
+(5, 4, 1, 1, '2026-01-21 12:23:41'),
+(6, 4, 2, 1, '2026-01-21 12:24:23');
 
 -- --------------------------------------------------------
 
@@ -355,9 +356,7 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `status`, `creat
 (6, 'Indra Guru', 'indra@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
 (7, 'Andi Guru', 'andi@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
 (8, 'Dono Guru', 'dono@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
-(9, 'Sinta Guru', 'sinta@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
-(10, 'Cika Guru', 'cika@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26'),
-(11, 'Mala Guru', 'mala@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26');
+(10, 'Cika Guru', 'cika@lms.test', 'password123', 'teacher', 'active', '2026-01-16 00:39:26');
 
 -- --------------------------------------------------------
 
@@ -379,7 +378,9 @@ CREATE TABLE `user_logs` (
 INSERT INTO `user_logs` (`id`, `user_id`, `activity`, `activity_time`) VALUES
 (1, 3, 'Submitted assignment ID: 1', '2026-01-16 07:39:26'),
 (2, 4, 'Submitted assignment ID: 1', '2026-01-16 07:39:26'),
-(3, 3, 'Submitted assignment ID: 3', '2026-01-16 07:39:26');
+(3, 3, 'Submitted assignment ID: 3', '2026-01-16 07:39:26'),
+(4, 5, 'User login ke sistem', '2026-01-24 12:01:52'),
+(5, 1, 'User login ke sistem', '2026-02-07 06:33:34');
 
 --
 -- Indexes for dumped tables
@@ -535,7 +536,7 @@ ALTER TABLE `discussions`
 -- AUTO_INCREMENT for table `enrollments`
 --
 ALTER TABLE `enrollments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `materials`
@@ -583,13 +584,13 @@ ALTER TABLE `submissions`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `user_logs`
 --
 ALTER TABLE `user_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 -- --------------------------------------------------------
 
