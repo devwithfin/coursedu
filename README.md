@@ -1,69 +1,103 @@
-# Welcome to your Expo app 👋
+# 📚 CourseDu
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+CourseDu adalah aplikasi web berbasis Node.js dengan database MySQL yang
+berjalan di `localhost:8080`.
 
-## Get started
+------------------------------------------------------------------------
 
-1. Install dependencies
+## 🚀 Getting Started
 
-   ```bash
-   npm install
-   ```
+Ikuti langkah-langkah berikut untuk menjalankan project secara lokal.
 
-2. Start both Expo servers + the backends
+------------------------------------------------------------------------
 
-   ```bash
-   npm run start
-   ```
+## 1️⃣ Clone Repository
 
-   This command launches the new **coursedu-project** hub on port **8080**, automatically boots the
-   existing **group1/app-expo** project on port **8081**, starts the **group1/app-backend** Nodemon
-   server, and also launches the **group5** Expo app on port **8085** plus its backend on port
-   **3004**.
-   Use `npm run start:root`, `npm run start:group1`, `npm run start:backend`,
-   `npm run start:group5`, or `npm run start:group5:backend` if you need to run any environment in
-   isolation.
-
-In the output, you'll find options to open the coursedu hub in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+``` bash
+git clone https://github.com/devwithfin/coursedu
+cd coursedu
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+------------------------------------------------------------------------
 
-## Linked Apps
+## 2️⃣ Jalankan Local Server
 
-- **Group 1**  
-  Expo app: `group1/app-expo` (port **8081**). Backend: `group1/app-backend` (port from `.env`, defaults
-  to **3000**). The launcher at port 8080 includes a card that links to `http://localhost:8081`.
+Pastikan service berikut sudah running:
 
-- **Group 5**  
-  Expo app: `group5/frontend` (port **8085**). Backend: `group5/backend` (port **3004** by default).
-  A second card on the launcher links to `http://localhost:8085`, and the frontend expects the API at
-  `http://localhost:3004` unless `EXPO_PUBLIC_GROUP5_API_URL` is set.
+-   Apache
+-   MySQL
 
-## Learn more
+Jika menggunakan XAMPP / Laragon / WAMP, aktifkan keduanya sebelum
+lanjut.
 
-To learn more about developing your project with Expo, look at the following resources:
+------------------------------------------------------------------------
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 3️⃣ Setup Database
 
-## Join the community
+1.  Buka DBMS GUI (contoh: phpMyAdmin).
+2.  Buat database baru dengan nama:
 
-Join our community of developers creating universal apps.
+coursedu
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+3.  Import file `.sql` yang tersedia ke database `coursedu`.
+
+------------------------------------------------------------------------
+
+## 4️⃣ Install Dependencies
+
+Pastikan kamu berada di root folder project, lalu jalankan:
+
+``` bash
+npm run install:all
+```
+
+Tunggu hingga proses selesai tanpa error.
+
+------------------------------------------------------------------------
+
+## 5️⃣ Jalankan Aplikasi
+
+``` bash
+npm run start
+```
+
+------------------------------------------------------------------------
+
+## 6️⃣ Akses di Browser
+
+Buka:
+
+http://localhost:8080
+
+Jika setup berhasil, akan muncul **5 card** di halaman utama.
+
+------------------------------------------------------------------------
+
+# 🛠 Requirements
+
+-   Node.js (disarankan v16 atau lebih baru)
+-   MySQL / MariaDB
+-   npm
+-   DBMS GUI (phpMyAdmin / HeidiSQL / DBeaver / dll)
+
+------------------------------------------------------------------------
+
+# ✅ Verifikasi
+
+Pastikan:
+
+-   Server berjalan tanpa error
+-   Database terkoneksi
+-   5 card tampil di homepage
+-   Semua fitur bisa diuji
+
+------------------------------------------------------------------------
+
+# 📌 Notes
+
+Jika terjadi error:
+
+-   Pastikan MySQL aktif
+-   Pastikan nama database `coursedu` sudah benar
+-   Pastikan sudah berada di root folder sebelum menjalankan perintah
+    npm
